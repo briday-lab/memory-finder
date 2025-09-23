@@ -214,7 +214,7 @@ export default function Dashboard({ user }: { user: User }) {
             end_time_seconds: Number(result.end_time_seconds ?? result.endTime ?? 0) || 0,
             description: result.description ?? result.content ?? searchQuery,
             confidence_score: Number(result.confidence_score ?? result.confidence ?? 0) || 0,
-            video_file_id: result.video_file_id || result.videoId || '',
+            video_file_id: result.videoKey || result.video_file_id || result.videoId || '',
             fileName: result.fileName,
             fileSize: result.fileSize,
             lastModified: result.lastModified
