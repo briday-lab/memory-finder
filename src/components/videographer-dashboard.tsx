@@ -137,7 +137,7 @@ export default function VideographerDashboard() {
                       <DialogHeader>
                         <DialogTitle>Create New Wedding Event</DialogTitle>
                         <DialogDescription>
-                          Enter the couple's details to create a new wedding project
+                          Enter the couple&apos;s details to create a new wedding project
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
