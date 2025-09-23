@@ -134,10 +134,14 @@ export default function Dashboard({ user }: { user: User }) {
         if (uploadResponse.ok) {
           alert('File uploaded successfully!')
         } else {
-          alert('Upload failed')
+          const errorText = await uploadResponse.text()
+          console.error('S3 upload error:', uploadResponse.status, errorText)
+          alert(`Upload failed: ${uploadResponse.status} - ${errorText}`)
         }
       } else {
-        alert('Failed to get upload URL')
+        const errorData = await response.json()
+        console.error('API error:', response.status, errorData)
+        alert(`Failed to get upload URL: ${response.status} - ${errorData.error}`)
       }
     } catch (error) {
       console.error('Upload error:', error)
