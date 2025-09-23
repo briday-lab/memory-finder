@@ -60,22 +60,7 @@ export default function Dashboard({ user }: { user: User }) {
     wedding_date: '2024-06-15',
     description: 'Beautiful outdoor wedding ceremony'
   })
-  const [videoFiles] = useState<VideoFile[]>([
-    {
-      id: 'video-1',
-      filename: 'ceremony.mp4',
-      duration_seconds: 1800,
-      processing_status: 'completed',
-      created_at: '2024-06-15T14:00:00Z'
-    },
-    {
-      id: 'video-2',
-      filename: 'reception.mp4',
-      duration_seconds: 2400,
-      processing_status: 'completed',
-      created_at: '2024-06-15T18:00:00Z'
-    }
-  ])
+  const [videoFiles, setVideoFiles] = useState<VideoFile[]>([])
   const [, setMoments] = useState<VideoMoment[]>([
     {
       id: 'moment-1',
@@ -133,6 +118,8 @@ export default function Dashboard({ user }: { user: User }) {
 
         if (uploadResponse.ok) {
           alert('File uploaded successfully!')
+          // Refresh the list from S3
+          await refreshFiles()
         } else {
           const errorText = await uploadResponse.text()
           console.error('S3 upload error:', uploadResponse.status, errorText)
@@ -150,6 +137,38 @@ export default function Dashboard({ user }: { user: User }) {
       setIsUploading(false)
     }
   }
+
+  const refreshFiles = async () => {
+    try {
+      const response = await fetch('/api/files', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: selectedProject.id })
+      })
+      if (!response.ok) return
+      const data = await response.json()
+      const items: Array<{ key?: string; fileName?: string; lastModified?: string | Date; size?: number }> = data.items || []
+      const mapped: VideoFile[] = items.map((it, idx) => ({
+        id: it.key || String(idx),
+        filename: it.fileName || 'unknown',
+        duration_seconds: 0,
+        processing_status: 'completed',
+        created_at: (it.lastModified ? new Date(it.lastModified).toISOString() : new Date().toISOString()),
+      }))
+      setVideoFiles(mapped)
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Refresh files error:', e)
+    }
+  }
+
+  // Initial load
+  useEffect(() => {
+    if (selectedProject) {
+      refreshFiles()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProject?.id])
 
   const handleSearch = async () => {
     if (!searchQuery.trim() || !selectedProject) return
