@@ -26,12 +26,14 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         // For demo purposes, accept any credentials
         if (credentials?.email && credentials?.password) {
-          return {
+          const user = {
             id: '1',
             email: credentials.email,
             name: credentials.email.split('@')[0],
             userType: credentials.userType || 'videographer'
           }
+          console.log('Authorizing user:', user)
+          return user
         }
         return null
       }
@@ -41,6 +43,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.userType = (user as { userType?: string }).userType || 'videographer'
+        console.log('JWT callback - user:', user, 'token.userType:', token.userType)
       }
       return token
     },
