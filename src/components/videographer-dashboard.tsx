@@ -58,7 +58,7 @@ export default function VideographerDashboard() {
       groom_name: newProject.groom_name,
       wedding_date: newProject.wedding_date,
       description: newProject.description,
-      videographer_id: session?.user?.id || '1',
+      videographer_id: (session?.user as { id?: string })?.id || '1',
       couple_id: `couple-${Date.now()}`,
       status: 'active',
       created_at: new Date().toISOString(),
