@@ -188,7 +188,19 @@ export default function Dashboard({ user }: { user: User }) {
 
       if (response.ok) {
         const data = await response.json()
-        setSearchResults(data.results || [])
+        const normalized = (data.results || []).map((r: any, idx: number) => ({
+          id: r.id || String(idx),
+          // Map potential API shapes to expected seconds-based fields
+          start_time_seconds: Number(r.start_time_seconds ?? r.startTime ?? 0) || 0,
+          end_time_seconds: Number(r.end_time_seconds ?? r.endTime ?? 0) || 0,
+          description: r.description ?? r.content ?? searchQuery,
+          confidence_score: Number(r.confidence_score ?? r.confidence ?? 0) || 0,
+          video_file_id: r.video_file_id || r.videoId || '',
+          fileName: r.fileName,
+          fileSize: r.fileSize,
+          lastModified: r.lastModified
+        }))
+        setSearchResults(normalized)
       } else {
         console.error('Search failed')
       }
@@ -286,6 +298,12 @@ export default function Dashboard({ user }: { user: User }) {
                       {isUploading && (
                         <p className="text-sm text-blue-600">Uploading...</p>
                       )}
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" onClick={refreshFiles}>
+                          Refresh List
+                        </Button>
+                        <span className="text-sm text-gray-500">Project ID: {selectedProject?.id}</span>
+                      </div>
                     </div>
 
                     <div className="mt-8">
@@ -309,6 +327,9 @@ export default function Dashboard({ user }: { user: User }) {
                             </Button>
                           </div>
                         ))}
+                        {videoFiles.length === 0 && (
+                          <p className="text-sm text-gray-500">No uploads found. Use the Refresh button after uploading.</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>

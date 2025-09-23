@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const files: _Object[] = result.Contents || []
 
     const items = files
-      .filter((f) => (f.Key || '').endsWith('.mp4') || (f.Key || '').endsWith('.mov') || (f.Key || '').endsWith('.mkv'))
+      .filter((f) => (f.Key || '').endsWith('.mp4') || (f.Key || '').endsWith('.mov') || (f.Key || '').endsWith('.mkv') || (f.Key || '').endsWith('.MP4'))
       .map((f) => ({
         key: f.Key,
         fileName: f.Key ? f.Key.split('/').pop() : undefined,
