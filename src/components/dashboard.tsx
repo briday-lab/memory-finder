@@ -61,24 +61,7 @@ export default function Dashboard({ user }: { user: User }) {
     description: 'Beautiful outdoor wedding ceremony'
   })
   const [videoFiles, setVideoFiles] = useState<VideoFile[]>([])
-  const [, setMoments] = useState<VideoMoment[]>([
-    {
-      id: 'moment-1',
-      start_time_seconds: 300,
-      end_time_seconds: 360,
-      description: 'Wedding vows',
-      confidence_score: 0.95,
-      video_file_id: 'video-1'
-    },
-    {
-      id: 'moment-2',
-      start_time_seconds: 1200,
-      end_time_seconds: 1260,
-      description: 'First dance',
-      confidence_score: 0.92,
-      video_file_id: 'video-2'
-    }
-  ])
+  // Removed unused setMoments state
   const [searchQuery, setSearchQuery] = useState('')
   const [isUploading, setIsUploading] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
@@ -188,18 +171,21 @@ export default function Dashboard({ user }: { user: User }) {
 
       if (response.ok) {
         const data = await response.json()
-        const normalized = (data.results || []).map((r: any, idx: number) => ({
-          id: r.id || String(idx),
-          // Map potential API shapes to expected seconds-based fields
-          start_time_seconds: Number(r.start_time_seconds ?? r.startTime ?? 0) || 0,
-          end_time_seconds: Number(r.end_time_seconds ?? r.endTime ?? 0) || 0,
-          description: r.description ?? r.content ?? searchQuery,
-          confidence_score: Number(r.confidence_score ?? r.confidence ?? 0) || 0,
-          video_file_id: r.video_file_id || r.videoId || '',
-          fileName: r.fileName,
-          fileSize: r.fileSize,
-          lastModified: r.lastModified
-        }))
+        const normalized = (data.results || []).map((r: unknown, idx: number) => {
+          const result = r as Record<string, unknown>
+          return {
+            id: result.id || String(idx),
+            // Map potential API shapes to expected seconds-based fields
+            start_time_seconds: Number(result.start_time_seconds ?? result.startTime ?? 0) || 0,
+            end_time_seconds: Number(result.end_time_seconds ?? result.endTime ?? 0) || 0,
+            description: result.description ?? result.content ?? searchQuery,
+            confidence_score: Number(result.confidence_score ?? result.confidence ?? 0) || 0,
+            video_file_id: result.video_file_id || result.videoId || '',
+            fileName: result.fileName,
+            fileSize: result.fileSize,
+            lastModified: result.lastModified
+          }
+        })
         setSearchResults(normalized)
       } else {
         console.error('Search failed')

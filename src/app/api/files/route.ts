@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, items })
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('List files error:', error)
     return NextResponse.json({ error: 'Failed to list files' }, { status: 500 })
   }
