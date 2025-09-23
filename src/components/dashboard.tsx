@@ -43,6 +43,9 @@ interface VideoMoment {
   description: string
   confidence_score: number
   video_file_id: string
+  fileName?: string
+  fileSize?: number
+  lastModified?: Date
 }
 
 export default function Dashboard({ user }: { user: User }) {
