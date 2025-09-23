@@ -2,6 +2,14 @@ import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
 
+interface ExtendedUser {
+  id?: string
+  userType?: string
+  name?: string | null
+  email?: string | null
+  image?: string | null
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -38,8 +46,8 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token && session.user) {
-        (session.user as any).id = token.sub!
-        (session.user as any).userType = token.userType as string
+        (session.user as ExtendedUser).id = token.sub!
+        (session.user as ExtendedUser).userType = token.userType as string
       }
       return session
     }
