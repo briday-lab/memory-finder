@@ -25,7 +25,6 @@ export default function VideoPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
     const video = videoRef.current
@@ -34,7 +33,6 @@ export default function VideoPlayer({
     const handleLoadedMetadata = () => {
       setDuration(video.duration)
       video.currentTime = startTime
-      setIsLoaded(true)
     }
 
     const handleTimeUpdate = () => {

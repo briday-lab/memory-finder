@@ -12,9 +12,7 @@ import {
   Video, 
   Heart, 
   LogOut, 
-  Plus,
-  Play,
-  RefreshCcw
+  Plus
 } from 'lucide-react'
 
 interface User {
@@ -222,7 +220,7 @@ export default function Dashboard({ user }: { user: User }) {
         setSearchResults(normalized)
         
         // Fetch video URLs for all results
-        normalized.forEach(async (moment) => {
+        normalized.forEach(async (moment: VideoMoment) => {
           if (moment.video_file_id) {
             await getVideoUrl(moment.video_file_id)
           }
