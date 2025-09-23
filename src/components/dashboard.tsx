@@ -6,13 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import VideoPlayer from '@/components/video-player'
 import { 
   Search, 
   Video, 
   Heart, 
   LogOut, 
   Plus,
-  Play
+  Play,
+  RefreshCcw
 } from 'lucide-react'
 
 interface User {
@@ -66,6 +68,31 @@ export default function Dashboard({ user }: { user: User }) {
   const [isUploading, setIsUploading] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<VideoMoment[]>([])
+  const [videoUrls, setVideoUrls] = useState<Record<string, string>>({})
+
+  const getVideoUrl = async (videoKey: string) => {
+    if (videoUrls[videoKey]) return videoUrls[videoKey]
+    
+    try {
+      const response = await fetch('/api/video-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: videoKey,
+          bucket: 'memory-finder-raw-120915929747-us-east-2'
+        })
+      })
+      
+      if (response.ok) {
+        const { videoUrl } = await response.json()
+        setVideoUrls(prev => ({ ...prev, [videoKey]: videoUrl }))
+        return videoUrl
+      }
+    } catch (error) {
+      console.error('Failed to get video URL:', error)
+    }
+    return null
+  }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -139,8 +166,14 @@ export default function Dashboard({ user }: { user: User }) {
         created_at: (it.lastModified ? new Date(it.lastModified).toISOString() : new Date().toISOString()),
       }))
       setVideoFiles(mapped)
+      
+      // Fetch video URLs for all uploaded files
+      mapped.forEach(async (file) => {
+        if (file.id) {
+          await getVideoUrl(file.id)
+        }
+      })
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error('Refresh files error:', e)
     }
   }
@@ -187,6 +220,13 @@ export default function Dashboard({ user }: { user: User }) {
           }
         })
         setSearchResults(normalized)
+        
+        // Fetch video URLs for all results
+        normalized.forEach(async (moment) => {
+          if (moment.video_file_id) {
+            await getVideoUrl(moment.video_file_id)
+          }
+        })
       } else {
         console.error('Search failed')
       }
@@ -294,24 +334,14 @@ export default function Dashboard({ user }: { user: User }) {
 
                     <div className="mt-8">
                       <h3 className="text-lg font-semibold mb-4">Uploaded Videos</h3>
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         {videoFiles.map((file) => (
-                          <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div className="flex items-center space-x-3">
-                              <Video className="h-5 w-5 text-gray-500" />
-                              <div>
-                                <p className="font-medium">{file.filename}</p>
-                                <p className="text-sm text-gray-600">
-                                  {Math.floor(file.duration_seconds / 60)} minutes • 
-                                  {file.processing_status === 'completed' ? ' Ready' : ' Processing...'}
-                                </p>
-                              </div>
-                            </div>
-                            <Button size="sm" variant="outline">
-                              <Play className="h-4 w-4 mr-2" />
-                              Play
-                            </Button>
-                          </div>
+                          <VideoPlayer
+                            key={file.id}
+                            src={videoUrls[file.id] || ''}
+                            fileName={file.filename}
+                            className="max-w-lg"
+                          />
                         ))}
                         {videoFiles.length === 0 && (
                           <p className="text-sm text-gray-500">No uploads found. Use the Refresh button after uploading.</p>
@@ -348,26 +378,16 @@ export default function Dashboard({ user }: { user: User }) {
                       {searchResults.length > 0 && (
                         <div className="mt-6">
                           <h3 className="text-lg font-semibold mb-4">Search Results</h3>
-                          <div className="space-y-3">
+                          <div className="space-y-4">
                             {searchResults.map((moment) => (
-                              <div key={moment.id} className="p-4 bg-gray-50 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="font-medium">{moment.description}</p>
-                                    <p className="text-sm text-gray-600">
-                                      {Math.floor(moment.start_time_seconds / 60)}:{(moment.start_time_seconds % 60).toString().padStart(2, '0')} - 
-                                      {Math.floor(moment.end_time_seconds / 60)}:{(moment.end_time_seconds % 60).toString().padStart(2, '0')}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      Confidence: {Math.round(moment.confidence_score * 100)}%
-                                    </p>
-                                  </div>
-                                  <Button size="sm">
-                                    <Play className="h-4 w-4 mr-2" />
-                                    Play Clip
-                                  </Button>
-                                </div>
-                              </div>
+                              <VideoPlayer
+                                key={moment.id}
+                                src={videoUrls[moment.video_file_id] || ''}
+                                startTime={moment.start_time_seconds}
+                                endTime={moment.end_time_seconds}
+                                fileName={moment.fileName}
+                                className="max-w-2xl"
+                              />
                             ))}
                           </div>
                         </div>
