@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -39,6 +39,9 @@ export default function VideographerDashboard() {
   const [projects, setProjects] = useState<WeddingProject[]>([])
   const [selectedProject, setSelectedProject] = useState<WeddingProject | null>(null)
   const [isCreatingProject, setIsCreatingProject] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [newProject, setNewProject] = useState({
     bride_name: '',
     groom_name: '',
@@ -78,6 +81,64 @@ export default function VideographerDashboard() {
       month: 'long',
       day: 'numeric'
     })
+  }
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || !selectedProject) return
+
+    setIsUploading(true)
+    setUploadProgress(0)
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        
+        // Get presigned URL from our API
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            projectId: selectedProject.id,
+          }),
+        })
+
+        if (response.ok) {
+          const { presignedUrl } = await response.json()
+          
+          // Upload file directly to S3
+          const uploadResponse = await fetch(presignedUrl, {
+            method: 'PUT',
+            body: file,
+            headers: { 'Content-Type': file.type },
+          })
+
+          if (uploadResponse.ok) {
+            setUploadProgress((i + 1) / files.length * 100)
+          } else {
+            console.error('Upload failed for:', file.name)
+          }
+        }
+      }
+      
+      alert('Files uploaded successfully!')
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Upload failed')
+    } finally {
+      setIsUploading(false)
+      setUploadProgress(0)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    handleFileUpload(e.dataTransfer.files)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
   }
 
   const getStatusIcon = (status: string) => {
@@ -271,15 +332,41 @@ export default function VideographerDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-pink-400 transition-colors">
+                    <div 
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-pink-400 transition-colors cursor-pointer"
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
                       <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                       <h3 className="text-lg font-medium mb-2">Drop your wedding videos here</h3>
                       <p className="text-gray-600 mb-4">
                         Supports MP4, MOV, AVI files up to 10GB each
                       </p>
-                      <Button className="bg-pink-600 hover:bg-pink-700">
-                        Choose Files
+                      <Button 
+                        className="bg-pink-600 hover:bg-pink-700"
+                        disabled={isUploading}
+                      >
+                        {isUploading ? `Uploading... ${Math.round(uploadProgress)}%` : 'Choose Files'}
                       </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e.target.files)}
+                      />
+                      {isUploading && (
+                        <div className="mt-4">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-pink-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${uploadProgress}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
