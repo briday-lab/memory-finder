@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn, getSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,7 @@ export default function SignInPage() {
     setIsLoading(true)
     try {
       await signIn('google', { callbackUrl: '/dashboard' })
-    } catch (error) {
+    } catch {
       setError('Sign in failed')
     } finally {
       setIsLoading(false)
@@ -49,7 +49,7 @@ export default function SignInPage() {
       } else {
         setError('Invalid credentials')
       }
-    } catch (error) {
+    } catch {
       setError('Sign in failed')
     } finally {
       setIsLoading(false)

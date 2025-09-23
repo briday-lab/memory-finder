@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.userType = (user as any).userType || 'videographer'
+        token.userType = (user as { userType?: string }).userType || 'videographer'
       }
       return token
     },

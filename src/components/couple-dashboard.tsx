@@ -10,9 +10,7 @@ import {
   Heart, 
   Search, 
   LogOut, 
-  Play,
   Sparkles,
-  Calendar,
   Users
 } from 'lucide-react'
 

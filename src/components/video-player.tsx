@@ -24,7 +24,6 @@ export default function VideoPlayer({
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
   const [segmentDuration, setSegmentDuration] = useState(0)
 
   useEffect(() => {
@@ -32,7 +31,6 @@ export default function VideoPlayer({
     if (!video) return
 
     const handleLoadedMetadata = () => {
-      setDuration(video.duration)
       video.currentTime = startTime
       
       // Calculate segment duration

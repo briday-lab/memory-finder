@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,7 +13,6 @@ import {
   Plus, 
   LogOut, 
   Upload,
-  Calendar,
   Users,
   Video,
   CheckCircle,
@@ -144,7 +143,7 @@ export default function VideographerDashboard() {
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="bride_name">Bride's Name</Label>
+                            <Label htmlFor="bride_name">Bride&apos;s Name</Label>
                             <Input
                               id="bride_name"
                               value={newProject.bride_name}
@@ -153,7 +152,7 @@ export default function VideographerDashboard() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="groom_name">Groom's Name</Label>
+                            <Label htmlFor="groom_name">Groom&apos;s Name</Label>
                             <Input
                               id="groom_name"
                               value={newProject.groom_name}

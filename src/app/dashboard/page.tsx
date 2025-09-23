@@ -34,7 +34,7 @@ export default function DashboardPage() {
   }
 
   // Route based on user type
-  const userType = (session.user as any)?.userType || 'videographer'
+  const userType = (session.user as { userType?: string })?.userType || 'videographer'
   
   if (userType === 'couple') {
     return <CoupleDashboard />
