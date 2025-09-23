@@ -25,6 +25,7 @@ export default function VideoPlayer({
   const [isMuted, setIsMuted] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [segmentDuration, setSegmentDuration] = useState(0)
 
   useEffect(() => {
     const video = videoRef.current
@@ -33,16 +34,23 @@ export default function VideoPlayer({
     const handleLoadedMetadata = () => {
       setDuration(video.duration)
       video.currentTime = startTime
+      
+      // Calculate segment duration
+      const segment = endTime ? endTime - startTime : video.duration - startTime
+      setSegmentDuration(segment)
     }
 
     const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime)
+      // Calculate current time relative to segment start
+      const segmentCurrentTime = video.currentTime - startTime
+      setCurrentTime(Math.max(0, segmentCurrentTime))
       
       // Auto-stop at end time if specified
       if (endTime && video.currentTime >= endTime) {
         video.pause()
         setIsPlaying(false)
         video.currentTime = startTime
+        setCurrentTime(0)
       }
     }
 
@@ -85,9 +93,9 @@ export default function VideoPlayer({
     const video = videoRef.current
     if (!video) return
 
-    const seekTime = parseFloat(e.target.value)
+    const seekTime = parseFloat(e.target.value) + startTime
     video.currentTime = seekTime
-    setCurrentTime(seekTime)
+    setCurrentTime(parseFloat(e.target.value))
   }
 
   const formatTime = (time: number) => {
@@ -96,7 +104,7 @@ export default function VideoPlayer({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
   }
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0
+  const progress = segmentDuration > 0 ? (currentTime / segmentDuration) * 100 : 0
 
   return (
     <Card className={`w-full ${className}`}>
@@ -139,7 +147,7 @@ export default function VideoPlayer({
                 </Button>
                 
                 <div className="flex-1 text-white text-xs">
-                  {formatTime(currentTime)} / {formatTime(duration)}
+                  {formatTime(currentTime)} / {formatTime(segmentDuration)}
                 </div>
                 
                 <Button
@@ -154,17 +162,17 @@ export default function VideoPlayer({
               
               {/* Progress Bar */}
               <div className="relative">
-                <input
-                  type="range"
-                  min="0"
-                  max={duration || 0}
-                  value={currentTime}
-                  onChange={handleSeek}
-                  className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
-                  style={{
-                    background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${progress}%, rgba(255,255,255,0.3) ${progress}%, rgba(255,255,255,0.3) 100%)`
-                  }}
-                />
+              <input
+                type="range"
+                min="0"
+                max={segmentDuration || 0}
+                value={currentTime}
+                onChange={handleSeek}
+                className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
+                style={{
+                  background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${progress}%, rgba(255,255,255,0.3) ${progress}%, rgba(255,255,255,0.3) 100%)`
+                }}
+              />
               </div>
             </div>
           </div>
