@@ -15,15 +15,18 @@ export default function UserTypePage() {
   const selectUserType = async (userType: string) => {
     console.log('=== USER TYPE SELECTION ===')
     console.log('Selected user type:', userType)
+    console.log('Router object:', router)
     setIsLoading(true)
     
     try {
       // Store user type in localStorage for this session
       localStorage.setItem('userType', userType)
       console.log('Stored userType in localStorage:', userType)
+      console.log('About to redirect to /dashboard')
       
       // Redirect to dashboard
       router.push('/dashboard')
+      console.log('Router.push called')
     } catch (error) {
       console.error('Error setting user type:', error)
     } finally {
@@ -50,7 +53,10 @@ export default function UserTypePage() {
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Videographer Option */}
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectUserType('videographer')}>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => {
+            console.log('Videographer card clicked')
+            selectUserType('videographer')
+          }}>
             <CardHeader className="text-center">
               <Camera className="h-16 w-16 text-pink-600 mx-auto mb-4" />
               <CardTitle>I&apos;m a Videographer</CardTitle>
@@ -65,14 +71,24 @@ export default function UserTypePage() {
                 <li>• Track processing status</li>
                 <li>• Deliver to couples</li>
               </ul>
-              <Button className="w-full mt-4 bg-pink-600 hover:bg-pink-700" disabled={isLoading}>
+              <Button 
+                className="w-full mt-4 bg-pink-600 hover:bg-pink-700" 
+                disabled={isLoading}
+                onClick={() => {
+                  console.log('Videographer button clicked')
+                  selectUserType('videographer')
+                }}
+              >
                 {isLoading ? 'Loading...' : 'Continue as Videographer'}
               </Button>
             </CardContent>
           </Card>
 
           {/* Couple Option */}
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectUserType('couple')}>
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => {
+            console.log('Couple card clicked')
+            selectUserType('couple')
+          }}>
             <CardHeader className="text-center">
               <Users className="h-16 w-16 text-pink-600 mx-auto mb-4" />
               <CardTitle>I&apos;m a Couple</CardTitle>
@@ -87,7 +103,14 @@ export default function UserTypePage() {
                 <li>• Find special memories</li>
                 <li>• Share with family</li>
               </ul>
-              <Button className="w-full mt-4 bg-pink-600 hover:bg-pink-700" disabled={isLoading}>
+              <Button 
+                className="w-full mt-4 bg-pink-600 hover:bg-pink-700" 
+                disabled={isLoading}
+                onClick={() => {
+                  console.log('Couple button clicked')
+                  selectUserType('couple')
+                }}
+              >
                 {isLoading ? 'Loading...' : 'Continue as Couple'}
               </Button>
             </CardContent>
