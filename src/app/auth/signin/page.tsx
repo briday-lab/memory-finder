@@ -21,7 +21,7 @@ export default function SignInPage() {
     setIsLoading(true)
     setError('')
     try {
-      await signIn('google', { callbackUrl: '/auth/user-type' })
+      await signIn('google', { callbackUrl: '/dashboard' })
     } catch (err) {
       console.error('Google sign in error:', err)
       setError('Google sign in failed')

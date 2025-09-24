@@ -44,16 +44,26 @@ export default function DashboardPage() {
   }
 
   // Route based on user type
-  const userType = (session.user as { userType?: string })?.userType || 'videographer'
+  const sessionUserType = (session.user as { userType?: string })?.userType
+  const userType = sessionUserType || 'videographer'
   
   // Use localStorage user type if available, otherwise use session userType
   const finalUserType = localUserType || userType
   
   // Debug logging
   console.log('Session user:', session.user)
+  console.log('Session userType:', sessionUserType)
   console.log('User type:', userType)
   console.log('Local user type:', localUserType)
   console.log('Final user type:', finalUserType)
+  
+  // If this is a Google OAuth user (no userType in session) and no localStorage userType,
+  // redirect to user type selection
+  if (!sessionUserType && !localUserType) {
+    console.log('Google OAuth user detected, redirecting to user type selection')
+    router.push('/auth/user-type')
+    return null
+  }
   
   if (finalUserType === 'couple') {
     console.log('Rendering CoupleDashboard')
