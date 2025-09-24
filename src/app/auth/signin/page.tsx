@@ -14,13 +14,17 @@ export default function SignInPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState('videographer')
 
   const handleGoogleSignIn = async () => {
+    console.log('Google sign in clicked')
     setIsLoading(true)
+    setError('')
     try {
       await signIn('google', { callbackUrl: '/auth/user-type' })
-    } catch {
-      setError('Sign in failed')
+    } catch (err) {
+      console.error('Google sign in error:', err)
+      setError('Google sign in failed')
     } finally {
       setIsLoading(false)
     }
@@ -34,7 +38,9 @@ export default function SignInPage() {
     const formData = new FormData(e.currentTarget)
     const email = formData.get('email') as string
     const password = formData.get('password') as string
-    const userType = formData.get('userType') as string
+    const userType = activeTab // Use the active tab as userType
+
+    console.log('Signing in with:', { email, userType })
 
     try {
       const result = await signIn('credentials', {
@@ -44,12 +50,15 @@ export default function SignInPage() {
         redirect: false
       })
 
+      console.log('Sign in result:', result)
+
       if (result?.ok) {
         router.push('/dashboard')
       } else {
         setError('Invalid credentials')
       }
-    } catch {
+    } catch (err) {
+      console.error('Sign in error:', err)
       setError('Sign in failed')
     } finally {
       setIsLoading(false)
@@ -68,7 +77,7 @@ export default function SignInPage() {
           <p className="text-gray-600">Sign in to access your wedding memories</p>
         </div>
 
-        <Tabs defaultValue="videographer" className="w-full">
+        <Tabs defaultValue="videographer" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="videographer" className="flex items-center space-x-2">
               <Camera className="h-4 w-4" />
@@ -90,7 +99,10 @@ export default function SignInPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button
-                  onClick={handleGoogleSignIn}
+                  onClick={() => {
+                    console.log('Google button clicked')
+                    handleGoogleSignIn()
+                  }}
                   disabled={isLoading}
                   className="w-full"
                   variant="outline"
@@ -114,7 +126,6 @@ export default function SignInPage() {
                 </div>
 
                 <form onSubmit={handleCredentialsSignIn} className="space-y-4">
-                  <input type="hidden" name="userType" value="videographer" />
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -155,7 +166,10 @@ export default function SignInPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <Button
-                  onClick={handleGoogleSignIn}
+                  onClick={() => {
+                    console.log('Google button clicked')
+                    handleGoogleSignIn()
+                  }}
                   disabled={isLoading}
                   className="w-full"
                   variant="outline"
@@ -179,7 +193,6 @@ export default function SignInPage() {
                 </div>
 
                 <form onSubmit={handleCredentialsSignIn} className="space-y-4">
-                  <input type="hidden" name="userType" value="couple" />
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
