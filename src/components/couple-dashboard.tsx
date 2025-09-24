@@ -37,6 +37,7 @@ interface VideoMoment {
 }
 
 export default function CoupleDashboard() {
+  console.log('CoupleDashboard component loaded')
   const { data: session } = useSession()
   const [project, setProject] = useState<WeddingProject | null>(null)
   const [searchQuery, setSearchQuery] = useState('')

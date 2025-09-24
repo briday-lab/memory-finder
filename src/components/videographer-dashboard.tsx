@@ -35,6 +35,7 @@ interface WeddingProject {
 }
 
 export default function VideographerDashboard() {
+  console.log('VideographerDashboard component loaded')
   const { data: session } = useSession()
   const [projects, setProjects] = useState<WeddingProject[]>([])
   const [selectedProject, setSelectedProject] = useState<WeddingProject | null>(null)

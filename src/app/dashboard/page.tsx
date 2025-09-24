@@ -41,8 +41,10 @@ export default function DashboardPage() {
   console.log('User type:', userType)
   
   if (userType === 'couple') {
+    console.log('Rendering CoupleDashboard')
     return <CoupleDashboard />
   }
   
+  console.log('Rendering VideographerDashboard')
   return <VideographerDashboard />
 }
