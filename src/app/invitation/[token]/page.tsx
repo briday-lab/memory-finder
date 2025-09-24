@@ -36,12 +36,6 @@ export default function InvitationPage({ params }: { params: { token: string } }
   const [error, setError] = useState<string | null>(null)
   const [accepting, setAccepting] = useState(false)
 
-  useEffect(() => {
-    if (token) {
-      fetchInvitationData()
-    }
-  }, [token, fetchInvitationData])
-
   const fetchInvitationData = async () => {
     try {
       const response = await fetch(`/api/invitations/${token}`)
@@ -57,6 +51,12 @@ export default function InvitationPage({ params }: { params: { token: string } }
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (token) {
+      fetchInvitationData()
+    }
+  }, [token])
 
   const handleAcceptInvitation = async () => {
     if (!session) {
