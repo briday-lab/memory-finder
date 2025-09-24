@@ -30,7 +30,7 @@ interface InvitationData {
 export default function InvitationPage({ params }: { params: { token: string } }) {
   const { token } = params
   const router = useRouter()
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const [invitationData, setInvitationData] = useState<InvitationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -40,7 +40,7 @@ export default function InvitationPage({ params }: { params: { token: string } }
     if (token) {
       fetchInvitationData()
     }
-  }, [token])
+  }, [token, fetchInvitationData])
 
   const fetchInvitationData = async () => {
     try {
@@ -51,7 +51,7 @@ export default function InvitationPage({ params }: { params: { token: string } }
       } else {
         setError('Invitation not found or has expired')
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load invitation')
     } finally {
       setLoading(false)
@@ -83,7 +83,7 @@ export default function InvitationPage({ params }: { params: { token: string } }
         const errorData = await response.json()
         setError(errorData.error || 'Failed to accept invitation')
       }
-    } catch (err) {
+    } catch {
       setError('Failed to accept invitation')
     } finally {
       setAccepting(false)
@@ -174,7 +174,7 @@ export default function InvitationPage({ params }: { params: { token: string } }
               {invitation.invitation_message && (
                 <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-400">
                   <h4 className="font-semibold text-blue-800 mb-2">Personal Message</h4>
-                  <p className="text-blue-700 italic">"{invitation.invitation_message}"</p>
+                  <p className="text-blue-700 italic">&ldquo;{invitation.invitation_message}&rdquo;</p>
                   <p className="text-sm text-blue-600 mt-2">- {videographer.name}</p>
                 </div>
               )}
@@ -185,7 +185,7 @@ export default function InvitationPage({ params }: { params: { token: string } }
                 <ul className="space-y-2 text-green-700">
                   <li className="flex items-start space-x-2">
                     <span className="text-green-600">🔍</span>
-                    <span><strong>Search your memories:</strong> Find specific moments using natural language like "wedding vows" or "first dance"</span>
+                    <span><strong>Search your memories:</strong> Find specific moments using natural language like &ldquo;wedding vows&rdquo; or &ldquo;first dance&rdquo;</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <span className="text-green-600">🎬</span>

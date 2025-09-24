@@ -70,7 +70,7 @@ export default function AnalyticsDashboard() {
       } else {
         setError('Failed to load analytics')
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load analytics')
     } finally {
       setLoading(false)
