@@ -44,9 +44,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         // For Google OAuth, we need to determine user type differently
         if (user.email && !token.userType) {
-          // Check if user type is stored in localStorage (set by user-type page)
-          // For now, default to videographer
-          token.userType = 'videographer'
+          // Don't set a default userType for Google OAuth users
+          // They will be redirected to user-type selection page
+          token.userType = undefined
         } else {
           token.userType = (user as { userType?: string }).userType || 'videographer'
         }
