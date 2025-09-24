@@ -84,20 +84,72 @@ locals {
     Comment = "Memory Finder - Ingest and Analysis",
     StartAt = "Initialize",
     States = {
-      Initialize = { Type = "Task", Resource = var.lambda_init_arn, Next = "FanOut" },
+      Initialize = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_init_arn,
+          "Payload.$": "$"
+        }, Next = "FanOut" },
       FanOut = {
         Type = "Parallel",
         Branches = [
-          { StartAt = "CreateProxies", States = { CreateProxies = { Type = "Task", Resource = var.mediaconvert_lambda_arn, Next = "Thumbnails" }, Thumbnails = { Type = "Task", Resource = var.lambda_thumbnails_arn, End = true } } },
-          { StartAt = "Transcribe", States = { Transcribe = { Type = "Task", Resource = var.transcribe_lambda_arn, Next = "Wait1" }, Wait1 = { Type = "Wait", Seconds = 30, Next = "FetchTranscript" }, FetchTranscript = { Type = "Task", Resource = var.lambda_fetch_transcript_arn, End = true } } },
-          { StartAt = "ShotDetect", States = { ShotDetect = { Type = "Task", Resource = var.lambda_shotdetect_arn, Next = "VisionLabels" }, VisionLabels = { Type = "Task", Resource = var.lambda_visionlabels_arn, Next = "Faces" }, Faces = { Type = "Task", Resource = var.lambda_faces_arn, Next = "Keyframes" }, Keyframes = { Type = "Task", Resource = var.lambda_keyframes_arn, End = true } } }
+          { StartAt = "CreateProxies", States = { CreateProxies = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.mediaconvert_lambda_arn,
+          "Payload.$": "$"
+        }, Next = "Thumbnails" }, Thumbnails = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_thumbnails_arn,
+          "Payload.$": "$"
+        }, End = true } } },
+          { StartAt = "Transcribe", States = { Transcribe = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.transcribe_lambda_arn,
+          "Payload.$": "$"
+        }, Next = "Wait1" }, Wait1 = { Type = "Wait", Seconds = 30, Next = "FetchTranscript" }, FetchTranscript = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_fetch_transcript_arn,
+          "Payload.$": "$"
+        }, End = true } } },
+          { StartAt = "ShotDetect", States = { ShotDetect = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_shotdetect_arn,
+          "Payload.$": "$"
+        }, Next = "VisionLabels" }, VisionLabels = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_visionlabels_arn,
+          "Payload.$": "$"
+        }, Next = "Faces" }, Faces = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_faces_arn,
+          "Payload.$": "$"
+        }, Next = "Keyframes" }, Keyframes = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_keyframes_arn,
+          "Payload.$": "$"
+        }, End = true } } }
         ],
         Next = "BuildSegments"
       },
-      BuildSegments = { Type = "Task", Resource = var.lambda_build_segments_arn, Next = "EmbedSegments" },
-      EmbedSegments = { Type = "Task", Resource = var.batch_submit_lambda_arn, Next = "PersistMetadata" },
-      PersistMetadata = { Type = "Task", Resource = var.lambda_persist_metadata_arn, Next = "NotifyComplete" },
-      NotifyComplete = { Type = "Task", Resource = var.lambda_notify_arn, End = true }
+      BuildSegments = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_build_segments_arn,
+          "Payload.$": "$"
+        }, Next = "EmbedSegments" },
+      EmbedSegments = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.batch_submit_lambda_arn,
+          "Payload.$": "$"
+        }, Next = "PersistMetadata" },
+      PersistMetadata = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_persist_metadata_arn,
+          "Payload.$": "$"
+        }, Next = "NotifyComplete" },
+      NotifyComplete = { Type = "Task", Resource = "arn:aws:states:::lambda:invoke",
+        Parameters = {
+          FunctionName = var.lambda_notify_arn,
+          "Payload.$": "$"
+        }, End = true }
     }
   })
 }
@@ -117,8 +169,38 @@ resource "aws_iam_role" "batch_service" {
   })
 }
 
+
+resource "aws_iam_role_policy" "batch_logs" {
+  name = "memory-finder-batch-logs"
+  role = aws_iam_role.batch_service.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream", 
+        "logs:PutLogEvents",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "ecs:ListClusters",
+        "ecs:DescribeClusters",
+        "ecs:ListServices",
+        "ecs:DescribeServices",
+        "ecs:ListTasks",
+        "ecs:DescribeTasks",
+        "ecs:RunTask",
+        "ecs:StopTask",
+        "ecs:DeleteCluster",
+        "ecs:CreateCluster"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 resource "aws_batch_compute_environment" "cpu_env" {
-  compute_environment_name = "memory-finder-cpu"
+  name = "memory-finder-cpu"
   type                     = "MANAGED"
   compute_resources {
     max_vcpus          = 16
@@ -133,7 +215,10 @@ resource "aws_batch_job_queue" "q" {
   name                 = "memory-finder-queue"
   state                = "ENABLED"
   priority             = 1
-  compute_environments = [aws_batch_compute_environment.cpu_env.arn]
+  compute_environment_order {
+    order = 1
+    compute_environment = aws_batch_compute_environment.cpu_env.arn
+  }
 }
 
-output "state_machine_arn" { value = aws_sfn_state_machine.ingest.arn }
+# output "state_machine_arn" { value = aws_sfn_state_machine.ingest.arn }

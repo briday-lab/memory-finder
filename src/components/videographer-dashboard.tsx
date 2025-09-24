@@ -17,8 +17,11 @@ import {
   Video,
   CheckCircle,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Share2,
+  BarChart3
 } from 'lucide-react'
+import AnalyticsDashboard from './analytics-dashboard'
 
 interface WeddingProject {
   id: string
@@ -60,6 +63,13 @@ export default function VideographerDashboard() {
     groom_name: '',
     wedding_date: '',
     description: ''
+  })
+  const [showShareProject, setShowShareProject] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [shareForm, setShareForm] = useState({
+    coupleEmail: '',
+    coupleName: '',
+    message: ''
   })
 
   const loadProjects = useCallback(async () => {
@@ -153,6 +163,38 @@ export default function VideographerDashboard() {
       }
     } catch (error) {
       console.error('Error creating project:', error)
+    }
+  }
+
+  const shareProject = async () => {
+    if (!selectedProject || !shareForm.coupleEmail) {
+      alert('Please select a project and enter couple email')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/projects/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: selectedProject.id,
+          coupleEmail: shareForm.coupleEmail,
+          coupleName: shareForm.coupleName,
+          message: shareForm.message
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to share project')
+      }
+
+      setShareForm({ coupleEmail: '', coupleName: '', message: '' })
+      setShowShareProject(false)
+      await loadProjects()
+      alert('Project shared successfully with the couple!')
+    } catch (error) {
+      console.error('Error sharing project:', error)
+      alert('Failed to share project')
     }
   }
 
@@ -273,6 +315,15 @@ export default function VideographerDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Welcome, {session?.user?.name}</span>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowAnalytics(true)}
+              >
+                <BarChart3 className="h-4 w-4 mr-2" /> Analytics
+              </Button>
+
               <Button variant="outline" size="sm" onClick={() => signOut()}>
                 <LogOut className="h-4 w-4 mr-2" /> Sign Out
               </Button>
@@ -365,6 +416,67 @@ export default function VideographerDashboard() {
                         </div>
                       </DialogContent>
                     </Dialog>
+
+                    {/* Share Project Dialog */}
+                    <Dialog open={showShareProject} onOpenChange={setShowShareProject}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Share Project with Couple</DialogTitle>
+                          <DialogDescription>
+                            Invite the couple to view their wedding project
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          {selectedProject && (
+                            <div className="p-3 bg-gray-50 rounded-lg">
+                              <p className="font-medium">{selectedProject.project_name}</p>
+                              <p className="text-sm text-gray-600">
+                                {selectedProject.bride_name} + {selectedProject.groom_name}
+                              </p>
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <Label htmlFor="couple_email">Couple&apos;s Email *</Label>
+                            <Input
+                              id="couple_email"
+                              type="email"
+                              value={shareForm.coupleEmail}
+                              onChange={(e) => setShareForm(prev => ({ ...prev, coupleEmail: e.target.value }))}
+                              placeholder="julia.tom@example.com"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="couple_name">Couple&apos;s Names (Optional)</Label>
+                            <Input
+                              id="couple_name"
+                              value={shareForm.coupleName}
+                              onChange={(e) => setShareForm(prev => ({ ...prev, coupleName: e.target.value }))}
+                              placeholder="Julia & Tom"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="message">Personal Message (Optional)</Label>
+                            <textarea
+                              id="message"
+                              className="w-full p-2 border border-gray-300 rounded-md resize-none"
+                              rows={3}
+                              value={shareForm.message}
+                              onChange={(e) => setShareForm(prev => ({ ...prev, message: e.target.value }))}
+                              placeholder="Hi! Your wedding videos are ready to view..."
+                            />
+                          </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="outline" onClick={() => setShowShareProject(false)}>
+                              Cancel
+                            </Button>
+                            <Button onClick={shareProject}>
+                              <Share2 className="h-4 w-4 mr-2" />
+                              Share Project
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </CardHeader>
@@ -385,7 +497,22 @@ export default function VideographerDashboard() {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-medium text-sm">{project.project_name}</h3>
-                        {getStatusIcon(project.status)}
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedProject(project)
+                              setShowShareProject(true)
+                            }}
+                          >
+                            <Share2 className="h-3 w-3 mr-1" />
+                            Share
+                          </Button>
+                          {getStatusIcon(project.status)}
+                        </div>
                       </div>
                       <p className="text-xs text-gray-600 mb-1">
                         {formatDate(project.wedding_date)}
@@ -569,6 +696,19 @@ export default function VideographerDashboard() {
           </section>
         </div>
       </main>
+
+      {/* Analytics Dialog */}
+      <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Analytics Dashboard</DialogTitle>
+            <DialogDescription>
+              Track your project performance and search analytics
+            </DialogDescription>
+          </DialogHeader>
+          <AnalyticsDashboard />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

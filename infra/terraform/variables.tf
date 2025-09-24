@@ -1,4 +1,7 @@
-variable "aws_region" { type = string default = "us-east-2" }
+variable "aws_region" {
+  type    = string
+  default = "us-east-2"
+}
 variable "s3_raw_bucket" { type = string }
 variable "s3_proxies_bucket" { type = string }
 variable "s3_thumbnails_bucket" { type = string }

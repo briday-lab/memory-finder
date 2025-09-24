@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -45,19 +45,45 @@ export default function CoupleDashboard() {
   const [isSearching, setIsSearching] = useState(false)
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({})
 
-  // Mock project data - in real app, this would be fetched based on couple's access
-  useEffect(() => {
-    const mockProject: WeddingProject = {
-      id: 'project-1',
-      project_name: 'Julia + Tom',
-      bride_name: 'Julia',
-      groom_name: 'Tom',
-      wedding_date: '2024-06-15',
-      description: 'Beautiful outdoor wedding ceremony',
-      thumbnail_url: '/api/placeholder/400/300'
+  const loadSharedProjects = useCallback(async () => {
+    if (!session?.user?.email) return
+
+    try {
+      // First, ensure user exists in database
+      const userResponse = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: session.user.email,
+          name: session.user.name,
+          userType: 'couple'
+        })
+      })
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to create/fetch user')
+      }
+
+      const userData = await userResponse.json()
+      const userId = userData.user.id
+
+      // Fetch projects shared with this couple
+      const projectsResponse = await fetch(`/api/projects?userId=${userId}&userType=couple`)
+      if (projectsResponse.ok) {
+        const { projects } = await projectsResponse.json()
+        if (projects.length > 0) {
+          setProject(projects[0]) // For now, show the first project
+        }
+      }
+    } catch (error) {
+      console.error('Error loading shared projects:', error)
     }
-    setProject(mockProject)
-  }, [])
+  }, [session])
+
+  // Load shared projects for the couple
+  useEffect(() => {
+    loadSharedProjects()
+  }, [loadSharedProjects])
 
   const getVideoUrl = async (videoKey: string) => {
     if (videoUrls[videoKey]) return videoUrls[videoKey]
@@ -88,12 +114,14 @@ export default function CoupleDashboard() {
 
     setIsSearching(true)
     try {
-      const response = await fetch('/api/search', {
+      const response = await fetch('/api/search-semantic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: searchQuery,
           projectId: project.id,
+          limit: 20,
+          similarityThreshold: 0.7
         }),
       })
 

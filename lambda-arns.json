@@ -1,0 +1,54 @@
+[
+    {
+        "Name": "memory-finder-Transcribe",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-Transcribe"
+    },
+    {
+        "Name": "memory-finder-InitJob",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-InitJob"
+    },
+    {
+        "Name": "memory-finder-BatchSubmit",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-BatchSubmit"
+    },
+    {
+        "Name": "memory-finder-FetchTranscript",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-FetchTranscript"
+    },
+    {
+        "Name": "memory-finder-PersistMetadata",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-PersistMetadata"
+    },
+    {
+        "Name": "memory-finder-Faces",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-Faces"
+    },
+    {
+        "Name": "memory-finder-BuildSegments",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-BuildSegments"
+    },
+    {
+        "Name": "memory-finder-VisionLabels",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-VisionLabels"
+    },
+    {
+        "Name": "memory-finder-NotifyComplete",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-NotifyComplete"
+    },
+    {
+        "Name": "memory-finder-Thumbnails",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-Thumbnails"
+    },
+    {
+        "Name": "memory-finder-ShotDetect",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-ShotDetect"
+    },
+    {
+        "Name": "memory-finder-Keyframes",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-Keyframes"
+    },
+    {
+        "Name": "memory-finder-MediaConvert",
+        "Arn": "arn:aws:lambda:us-east-2:120915929747:function:memory-finder-MediaConvert"
+    }
+]
