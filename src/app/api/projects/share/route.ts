@@ -75,42 +75,49 @@ export async function POST(request: NextRequest) {
     )
 
     // Create project invitation record (for tracking and notifications)
-    const invitationResult = await query(
-      `INSERT INTO project_invitations (
-        project_id, videographer_id, couple_id, couple_email, 
-        invitation_message, status, invitation_token, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      RETURNING invitation_token`,
-      [
-        projectId,
-        (session.user as { id?: string }).id,
-        coupleId,
-        coupleEmail,
-        message || `You've been invited to view your wedding video project: ${project.project_name}`,
-        'sent',
-        crypto.randomUUID()
-      ]
-    )
-
-    const invitationToken = invitationResult.rows[0].invitation_token
+    let invitationToken: string
+    try {
+      const invitationResult = await query(
+        `INSERT INTO project_invitations (
+          project_id, videographer_id, couple_id, couple_email, 
+          invitation_message, status, invitation_token, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        RETURNING invitation_token`,
+        [
+          projectId,
+          (session.user as { id?: string }).id,
+          coupleId,
+          coupleEmail,
+          message || `You've been invited to view your wedding video project: ${project.project_name}`,
+          'sent',
+          crypto.randomUUID()
+        ]
+      )
+      invitationToken = invitationResult.rows[0].invitation_token
+    } catch (invitationError) {
+      console.warn('Failed to create invitation record (table may not exist):', invitationError)
+      // Generate a token anyway for email purposes
+      invitationToken = crypto.randomUUID()
+    }
 
     // Send invitation email
-    const emailResult = await sendProjectInvitationEmail({
-      videographerName: project.videographer_name,
-      videographerEmail: project.videographer_email,
-      projectName: project.project_name,
-      brideName: project.bride_name,
-      groomName: project.groom_name,
-      weddingDate: project.wedding_date?.toISOString().split('T')[0] || 'TBD',
-      invitationMessage: message,
-      invitationToken: invitationToken,
-      coupleEmail: coupleEmail,
-      coupleName: coupleName
-    })
-
-    if (!emailResult.success) {
-      console.warn('Failed to send invitation email:', emailResult.error)
-      // Don't fail the request if email fails, just log it
+    let emailResult = { success: false, error: 'Email service not configured' }
+    try {
+      emailResult = await sendProjectInvitationEmail({
+        videographerName: project.videographer_name,
+        videographerEmail: project.videographer_email,
+        projectName: project.project_name,
+        brideName: project.bride_name,
+        groomName: project.groom_name,
+        weddingDate: project.wedding_date?.toISOString().split('T')[0] || 'TBD',
+        invitationMessage: message,
+        invitationToken: invitationToken,
+        coupleEmail: coupleEmail,
+        coupleName: coupleName
+      })
+    } catch (emailError) {
+      console.warn('Failed to send invitation email:', emailError)
+      emailResult = { success: false, error: emailError instanceof Error ? emailError.message : 'Unknown email error' }
     }
 
     return NextResponse.json({
@@ -148,22 +155,29 @@ export async function GET(request: NextRequest) {
     }
 
     // Get project sharing information
-    const sharingResult = await query(
-      `SELECT 
-        pi.*,
-        u.email as couple_email,
-        u.name as couple_name,
-        u.user_type as couple_type
-       FROM project_invitations pi
-       JOIN users u ON pi.couple_id = u.id
-       WHERE pi.project_id = $1
-       ORDER BY pi.created_at DESC`,
-      [projectId]
-    )
+    try {
+      const sharingResult = await query(
+        `SELECT 
+          pi.*,
+          u.email as couple_email,
+          u.name as couple_name,
+          u.user_type as couple_type
+         FROM project_invitations pi
+         JOIN users u ON pi.couple_id = u.id
+         WHERE pi.project_id = $1
+         ORDER BY pi.created_at DESC`,
+        [projectId]
+      )
 
-    return NextResponse.json({
-      invitations: sharingResult.rows
-    })
+      return NextResponse.json({
+        invitations: sharingResult.rows
+      })
+    } catch (tableError) {
+      console.warn('project_invitations table may not exist:', tableError)
+      return NextResponse.json({
+        invitations: []
+      })
+    }
 
   } catch (error: unknown) {
     console.error('Get project sharing error:', error)
