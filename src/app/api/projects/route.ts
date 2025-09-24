@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     let projectsQuery = ''
-    let params: any[] = []
+    let params: (string | number)[] = []
 
     if (userType === 'videographer') {
       // Videographers see all their projects

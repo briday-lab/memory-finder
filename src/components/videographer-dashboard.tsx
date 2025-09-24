@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,12 +61,7 @@ export default function VideographerDashboard() {
     description: ''
   })
 
-  // Load projects on component mount
-  useEffect(() => {
-    loadProjects()
-  }, [session])
-
-  const loadProjects = async () => {
+  const loadProjects = useCallback(async () => {
     if (!session?.user?.email) return
 
     try {
@@ -94,7 +89,12 @@ export default function VideographerDashboard() {
     } catch (error) {
       console.error('Error loading projects:', error)
     }
-  }
+  }, [session?.user?.email, session?.user?.name])
+
+  // Load projects on component mount
+  useEffect(() => {
+    loadProjects()
+  }, [loadProjects])
 
   const createProject = async () => {
     if (!newProject.bride_name || !newProject.groom_name || !newProject.wedding_date) {

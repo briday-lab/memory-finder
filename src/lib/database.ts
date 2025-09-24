@@ -31,7 +31,7 @@ export const testConnection = async () => {
 }
 
 // Execute a query
-export const query = async (text: string, params?: any[]) => {
+export const query = async (text: string, params?: (string | number | null)[]) => {
   const start = Date.now()
   try {
     const res = await pool.query(text, params)
