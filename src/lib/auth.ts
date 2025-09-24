@@ -42,7 +42,14 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.userType = (user as { userType?: string }).userType || 'videographer'
+        // For Google OAuth, we need to determine user type differently
+        if (user.email && !token.userType) {
+          // Check if user type is stored in localStorage (set by user-type page)
+          // For now, default to videographer
+          token.userType = 'videographer'
+        } else {
+          token.userType = (user as { userType?: string }).userType || 'videographer'
+        }
         console.log('JWT callback - user:', user, 'token.userType:', token.userType)
       }
       return token

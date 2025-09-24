@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import VideographerDashboard from '@/components/videographer-dashboard'
 import CoupleDashboard from '@/components/couple-dashboard'
 
@@ -36,11 +36,26 @@ export default function DashboardPage() {
   // Route based on user type
   const userType = (session.user as { userType?: string })?.userType || 'videographer'
   
+  // For Google OAuth users, check localStorage for user type selection
+  const [localUserType, setLocalUserType] = useState<string | null>(null)
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUserType = localStorage.getItem('userType')
+      setLocalUserType(storedUserType)
+    }
+  }, [])
+  
+  // Use localStorage user type if available, otherwise use session userType
+  const finalUserType = localUserType || userType
+  
   // Debug logging
   console.log('Session user:', session.user)
   console.log('User type:', userType)
+  console.log('Local user type:', localUserType)
+  console.log('Final user type:', finalUserType)
   
-  if (userType === 'couple') {
+  if (finalUserType === 'couple') {
     console.log('Rendering CoupleDashboard')
     return <CoupleDashboard />
   }
