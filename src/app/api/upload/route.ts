@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { query } from '@/lib/database'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { fileName, fileType, projectId } = body
+    const { fileName, fileType, projectId, fileSize } = body
 
     if (!fileName || !projectId) {
       return NextResponse.json({ error: 'fileName and projectId are required' }, { status: 400 })
@@ -25,18 +26,20 @@ export async function POST(request: NextRequest) {
 
     const { url, key, bucket } = await presignResponse.json()
 
-    // For now, we'll return the presigned URL without database storage
-    // In production, you'd save this to your database
+    // Save file information to database
+    const fileResult = await query(
+      `INSERT INTO files (project_id, filename, s3_key, s3_bucket, file_size, file_type, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'uploaded')
+       RETURNING *`,
+      [projectId, fileName, key, bucket, fileSize || null, fileType || null]
+    )
+
     return NextResponse.json({ 
       success: true, 
       presignedUrl: url,
       key,
       bucket,
-      file: {
-        id: `file-${Date.now()}`,
-        filename: fileName,
-        status: 'uploaded',
-      }
+      file: fileResult.rows[0]
     })
 
   } catch (error) {

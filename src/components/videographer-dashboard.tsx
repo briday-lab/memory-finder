@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,7 +16,8 @@ import {
   Users,
   Video,
   CheckCircle,
-  Clock
+  Clock,
+  RefreshCw
 } from 'lucide-react'
 
 interface WeddingProject {
@@ -30,8 +31,17 @@ interface WeddingProject {
   couple_id: string
   status: 'active' | 'completed' | 'archived'
   created_at: string
-  video_count: number
-  processing_status: 'pending' | 'processing' | 'completed'
+  file_count: number
+  processed_files: number
+}
+
+interface File {
+  id: string
+  filename: string
+  file_size: number
+  file_type: string
+  status: string
+  created_at: string
 }
 
 export default function VideographerDashboard() {
@@ -39,6 +49,7 @@ export default function VideographerDashboard() {
   const { data: session } = useSession()
   const [projects, setProjects] = useState<WeddingProject[]>([])
   const [selectedProject, setSelectedProject] = useState<WeddingProject | null>(null)
+  const [projectFiles, setProjectFiles] = useState<File[]>([])
   const [isCreatingProject, setIsCreatingProject] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -50,30 +61,88 @@ export default function VideographerDashboard() {
     description: ''
   })
 
+  // Load projects on component mount
+  useEffect(() => {
+    loadProjects()
+  }, [session])
+
+  const loadProjects = async () => {
+    if (!session?.user?.email) return
+
+    try {
+      // First, ensure user exists in database
+      const userResponse = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: session.user.email,
+          name: session.user.name,
+          userType: 'videographer'
+        })
+      })
+
+      if (userResponse.ok) {
+        const { user } = await userResponse.json()
+        
+        // Load projects for this user
+        const projectsResponse = await fetch(`/api/projects?userId=${user.id}&userType=videographer`)
+        if (projectsResponse.ok) {
+          const { projects } = await projectsResponse.json()
+          setProjects(projects)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading projects:', error)
+    }
+  }
+
   const createProject = async () => {
     if (!newProject.bride_name || !newProject.groom_name || !newProject.wedding_date) {
       return
     }
 
-    const project: WeddingProject = {
-      id: `project-${Date.now()}`,
-      project_name: `${newProject.bride_name} + ${newProject.groom_name}`,
-      bride_name: newProject.bride_name,
-      groom_name: newProject.groom_name,
-      wedding_date: newProject.wedding_date,
-      description: newProject.description,
-      videographer_id: (session?.user as { id?: string })?.id || '1',
-      couple_id: `couple-${Date.now()}`,
-      status: 'active',
-      created_at: new Date().toISOString(),
-      video_count: 0,
-      processing_status: 'pending'
-    }
+    if (!session?.user?.email) return
 
-    setProjects(prev => [project, ...prev])
-    setSelectedProject(project)
-    setIsCreatingProject(false)
-    setNewProject({ bride_name: '', groom_name: '', wedding_date: '', description: '' })
+    try {
+      // Get user ID
+      const userResponse = await fetch(`/api/users?email=${session.user.email}`)
+      const { user } = await userResponse.json()
+
+      const projectResponse = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videographerId: user.id,
+          projectName: `${newProject.bride_name} + ${newProject.groom_name}`,
+          brideName: newProject.bride_name,
+          groomName: newProject.groom_name,
+          weddingDate: newProject.wedding_date,
+          description: newProject.description
+        })
+      })
+
+      if (projectResponse.ok) {
+        const { project } = await projectResponse.json()
+        setProjects(prev => [project, ...prev])
+        setSelectedProject(project)
+        setIsCreatingProject(false)
+        setNewProject({ bride_name: '', groom_name: '', wedding_date: '', description: '' })
+      }
+    } catch (error) {
+      console.error('Error creating project:', error)
+    }
+  }
+
+  const loadProjectFiles = async (projectId: string) => {
+    try {
+      const response = await fetch(`/api/files?projectId=${projectId}`)
+      if (response.ok) {
+        const { files } = await response.json()
+        setProjectFiles(files)
+      }
+    } catch (error) {
+      console.error('Error loading files:', error)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -82,6 +151,14 @@ export default function VideographerDashboard() {
       month: 'long',
       day: 'numeric'
     })
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -102,6 +179,7 @@ export default function VideographerDashboard() {
             fileName: file.name,
             fileType: file.type,
             projectId: selectedProject.id,
+            fileSize: file.size
           }),
         })
 
@@ -122,6 +200,10 @@ export default function VideographerDashboard() {
           }
         }
       }
+      
+      // Reload project files after upload
+      await loadProjectFiles(selectedProject.id)
+      await loadProjects() // Refresh project list to update file counts
       
       alert('Files uploaded successfully!')
     } catch (error) {
@@ -188,70 +270,79 @@ export default function VideographerDashboard() {
                     <Camera className="h-5 w-5" />
                     <span>Events</span>
                   </CardTitle>
-                  <Dialog open={isCreatingProject} onOpenChange={setIsCreatingProject}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="flex items-center space-x-1">
-                        <Plus className="h-4 w-4" />
-                        <span>New Event</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create New Wedding Event</DialogTitle>
-                        <DialogDescription>
-                          Enter the couple&apos;s details to create a new wedding project
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                  <div className="flex space-x-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={loadProjects}
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Dialog open={isCreatingProject} onOpenChange={setIsCreatingProject}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" className="flex items-center space-x-1">
+                          <Plus className="h-4 w-4" />
+                          <span>New Event</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Wedding Event</DialogTitle>
+                          <DialogDescription>
+                            Enter the couple&apos;s details to create a new wedding project
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="bride_name">Bride&apos;s Name</Label>
+                              <Input
+                                id="bride_name"
+                                value={newProject.bride_name}
+                                onChange={(e) => setNewProject(prev => ({ ...prev, bride_name: e.target.value }))}
+                                placeholder="Julia"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="groom_name">Groom&apos;s Name</Label>
+                              <Input
+                                id="groom_name"
+                                value={newProject.groom_name}
+                                onChange={(e) => setNewProject(prev => ({ ...prev, groom_name: e.target.value }))}
+                                placeholder="Tom"
+                              />
+                            </div>
+                          </div>
                           <div className="space-y-2">
-                            <Label htmlFor="bride_name">Bride&apos;s Name</Label>
+                            <Label htmlFor="wedding_date">Wedding Date</Label>
                             <Input
-                              id="bride_name"
-                              value={newProject.bride_name}
-                              onChange={(e) => setNewProject(prev => ({ ...prev, bride_name: e.target.value }))}
-                              placeholder="Julia"
+                              id="wedding_date"
+                              type="date"
+                              value={newProject.wedding_date}
+                              onChange={(e) => setNewProject(prev => ({ ...prev, wedding_date: e.target.value }))}
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="groom_name">Groom&apos;s Name</Label>
+                            <Label htmlFor="description">Description (Optional)</Label>
                             <Input
-                              id="groom_name"
-                              value={newProject.groom_name}
-                              onChange={(e) => setNewProject(prev => ({ ...prev, groom_name: e.target.value }))}
-                              placeholder="Tom"
+                              id="description"
+                              value={newProject.description}
+                              onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="Beautiful outdoor ceremony..."
                             />
                           </div>
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="outline" onClick={() => setIsCreatingProject(false)}>
+                              Cancel
+                            </Button>
+                            <Button onClick={createProject}>
+                              Create Event
+                            </Button>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="wedding_date">Wedding Date</Label>
-                          <Input
-                            id="wedding_date"
-                            type="date"
-                            value={newProject.wedding_date}
-                            onChange={(e) => setNewProject(prev => ({ ...prev, wedding_date: e.target.value }))}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="description">Description (Optional)</Label>
-                          <Input
-                            id="description"
-                            value={newProject.description}
-                            onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                            placeholder="Beautiful outdoor ceremony..."
-                          />
-                        </div>
-                        <div className="flex justify-end space-x-2">
-                          <Button variant="outline" onClick={() => setIsCreatingProject(false)}>
-                            Cancel
-                          </Button>
-                          <Button onClick={createProject}>
-                            Create Event
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -264,11 +355,14 @@ export default function VideographerDashboard() {
                           ? 'bg-pink-50 border border-pink-200'
                           : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => setSelectedProject(project)}
+                      onClick={() => {
+                        setSelectedProject(project)
+                        loadProjectFiles(project.id)
+                      }}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-medium text-sm">{project.project_name}</h3>
-                        {getStatusIcon(project.processing_status)}
+                        {getStatusIcon(project.status)}
                       </div>
                       <p className="text-xs text-gray-600 mb-1">
                         {formatDate(project.wedding_date)}
@@ -276,7 +370,7 @@ export default function VideographerDashboard() {
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <span className="flex items-center space-x-1">
                           <Video className="h-3 w-3" />
-                          <span>{project.video_count} videos</span>
+                          <span>{project.file_count || 0} videos</span>
                         </span>
                         <span className="capitalize">{project.status}</span>
                       </div>
@@ -312,9 +406,9 @@ export default function VideographerDashboard() {
                         </CardDescription>
                       </div>
                       <div className="flex items-center space-x-2">
-                        {getStatusIcon(selectedProject.processing_status)}
+                        {getStatusIcon(selectedProject.status)}
                         <span className="text-sm text-gray-600 capitalize">
-                          {selectedProject.processing_status}
+                          {selectedProject.status}
                         </span>
                       </div>
                     </div>
@@ -372,6 +466,39 @@ export default function VideographerDashboard() {
                   </CardContent>
                 </Card>
 
+                {/* Uploaded Files */}
+                {projectFiles.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Uploaded Files</CardTitle>
+                      <CardDescription>
+                        Files uploaded to this project
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {projectFiles.map((file) => (
+                          <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <Video className="h-5 w-5 text-gray-600" />
+                              <div>
+                                <p className="font-medium text-sm">{file.filename}</p>
+                                <p className="text-xs text-gray-600">
+                                  {formatFileSize(file.file_size)} • {formatDate(file.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {getStatusIcon(file.status)}
+                              <span className="text-xs text-gray-600 capitalize">{file.status}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Project Summary */}
                 <Card>
                   <CardHeader>
@@ -384,18 +511,18 @@ export default function VideographerDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
                         <Video className="h-8 w-8 mx-auto mb-2 text-gray-600" />
-                        <h3 className="font-medium">{selectedProject.video_count}</h3>
+                        <h3 className="font-medium">{selectedProject.file_count || 0}</h3>
                         <p className="text-sm text-gray-600">Videos Uploaded</p>
                       </div>
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
                         <Clock className="h-8 w-8 mx-auto mb-2 text-gray-600" />
-                        <h3 className="font-medium">Processing</h3>
-                        <p className="text-sm text-gray-600">AI Analysis</p>
+                        <h3 className="font-medium">{selectedProject.file_count - (selectedProject.processed_files || 0)}</h3>
+                        <p className="text-sm text-gray-600">Processing</p>
                       </div>
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
                         <CheckCircle className="h-8 w-8 mx-auto mb-2 text-gray-600" />
-                        <h3 className="font-medium">Ready</h3>
-                        <p className="text-sm text-gray-600">For Couple</p>
+                        <h3 className="font-medium">{selectedProject.processed_files || 0}</h3>
+                        <p className="text-sm text-gray-600">Ready for Couple</p>
                       </div>
                     </div>
                   </CardContent>
