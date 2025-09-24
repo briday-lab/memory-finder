@@ -22,7 +22,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ user: result.rows[0] })
   } catch (error) {
     console.error('Error fetching user:', error)
-    return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 })
+    // Temporary debug detail to diagnose prod 500s (safe: no secrets returned)
+    return NextResponse.json({ 
+      error: 'Failed to fetch user',
+      details: {
+        message: (error as Error)?.message,
+        dbEnvPresent: {
+          host: Boolean(process.env.DB_HOST),
+          port: Boolean(process.env.DB_PORT),
+          name: Boolean(process.env.DB_NAME),
+          user: Boolean(process.env.DB_USER),
+          password: Boolean(process.env.DB_PASSWORD)
+        }
+      }
+    }, { status: 500 })
   }
 }
 
@@ -54,6 +67,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ user: result.rows[0] }, { status: 201 })
   } catch (error) {
     console.error('Error creating user:', error)
-    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })
+    // Temporary debug detail to diagnose prod 500s (safe: no secrets returned)
+    return NextResponse.json({ 
+      error: 'Failed to create user',
+      details: {
+        message: (error as Error)?.message,
+        dbEnvPresent: {
+          host: Boolean(process.env.DB_HOST),
+          port: Boolean(process.env.DB_PORT),
+          name: Boolean(process.env.DB_NAME),
+          user: Boolean(process.env.DB_USER),
+          password: Boolean(process.env.DB_PASSWORD)
+        }
+      }
+    }, { status: 500 })
   }
 }
