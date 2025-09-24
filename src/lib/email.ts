@@ -18,7 +18,7 @@ const createTransporter = () => {
     return null
   }
 
-  return nodemailer.createTransporter(EMAIL_CONFIG)
+  return nodemailer.createTransport(EMAIL_CONFIG)
 }
 
 export interface ProjectInvitationData {
