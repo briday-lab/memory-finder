@@ -9,6 +9,9 @@ import CoupleDashboard from '@/components/couple-dashboard'
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  
+  // For Google OAuth users, check localStorage for user type selection
+  const [localUserType, setLocalUserType] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return // Still loading
@@ -17,6 +20,13 @@ export default function DashboardPage() {
       return
     }
   }, [session, status, router])
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUserType = localStorage.getItem('userType')
+      setLocalUserType(storedUserType)
+    }
+  }, [])
 
   if (status === 'loading') {
     return (
@@ -35,16 +45,6 @@ export default function DashboardPage() {
 
   // Route based on user type
   const userType = (session.user as { userType?: string })?.userType || 'videographer'
-  
-  // For Google OAuth users, check localStorage for user type selection
-  const [localUserType, setLocalUserType] = useState<string | null>(null)
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUserType = localStorage.getItem('userType')
-      setLocalUserType(storedUserType)
-    }
-  }, [])
   
   // Use localStorage user type if available, otherwise use session userType
   const finalUserType = localUserType || userType

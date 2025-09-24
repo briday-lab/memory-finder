@@ -50,7 +50,7 @@ export default function UserTypePage() {
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectUserType('videographer')}>
             <CardHeader className="text-center">
               <Camera className="h-16 w-16 text-pink-600 mx-auto mb-4" />
-              <CardTitle>I'm a Videographer</CardTitle>
+              <CardTitle>I&apos;m a Videographer</CardTitle>
               <CardDescription>
                 I create wedding videos and need to upload, manage projects, and deliver content to couples.
               </CardDescription>
@@ -72,9 +72,9 @@ export default function UserTypePage() {
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => selectUserType('couple')}>
             <CardHeader className="text-center">
               <Users className="h-16 w-16 text-pink-600 mx-auto mb-4" />
-              <CardTitle>I'm a Couple</CardTitle>
+              <CardTitle>I&apos;m a Couple</CardTitle>
               <CardDescription>
-                I'm getting married and want to search through my wedding videos for special moments.
+                I&apos;m getting married and want to search through my wedding videos for special moments.
               </CardDescription>
             </CardHeader>
             <CardContent>
