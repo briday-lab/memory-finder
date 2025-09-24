@@ -48,6 +48,7 @@ export default function VideographerDashboard() {
   console.log('VideographerDashboard component loaded')
   const { data: session } = useSession()
   const [projects, setProjects] = useState<WeddingProject[]>([])
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [selectedProject, setSelectedProject] = useState<WeddingProject | null>(null)
   const [projectFiles, setProjectFiles] = useState<File[]>([])
   const [isCreatingProject, setIsCreatingProject] = useState(false)
@@ -104,15 +105,37 @@ export default function VideographerDashboard() {
     if (!session?.user?.email) return
 
     try {
-      // Get user ID
-      const userResponse = await fetch(`/api/users?email=${session.user.email}`)
-      const { user } = await userResponse.json()
+      // Ensure we have a user id
+      let userId = currentUserId
+      if (!userId) {
+        // Create or fetch user via POST to guarantee existence
+        const ensureUser = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: session.user.email,
+            name: session.user.name,
+            userType: 'videographer'
+          })
+        })
+        if (!ensureUser.ok) {
+          console.error('Failed to ensure user before creating project')
+          return
+        }
+        const ensured = await ensureUser.json()
+        userId = ensured.user?.id || null
+        if (!userId) {
+          console.error('No user id returned from ensure user')
+          return
+        }
+        setCurrentUserId(userId)
+      }
 
       const projectResponse = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          videographerId: user.id,
+          videographerId: userId,
           projectName: `${newProject.bride_name} + ${newProject.groom_name}`,
           brideName: newProject.bride_name,
           groomName: newProject.groom_name,
