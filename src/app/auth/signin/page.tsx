@@ -40,7 +40,8 @@ export default function SignInPage() {
     const password = formData.get('password') as string
     const userType = activeTab // Use the active tab as userType
 
-    console.log('Signing in with:', { email, userType })
+    console.log('=== EMAIL SIGN-IN DEBUG ===')
+    console.log('Signing in with:', { email, userType, activeTab })
 
     try {
       const result = await signIn('credentials', {

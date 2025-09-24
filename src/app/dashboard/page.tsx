@@ -51,11 +51,13 @@ export default function DashboardPage() {
   const finalUserType = localUserType || userType
   
   // Debug logging
+  console.log('=== DASHBOARD ROUTING DEBUG ===')
   console.log('Session user:', session.user)
   console.log('Session userType:', sessionUserType)
   console.log('User type:', userType)
   console.log('Local user type:', localUserType)
   console.log('Final user type:', finalUserType)
+  console.log('Will render:', finalUserType === 'couple' ? 'CoupleDashboard' : 'VideographerDashboard')
   
   // If this is a Google OAuth user (no userType in session) and no localStorage userType,
   // redirect to user type selection

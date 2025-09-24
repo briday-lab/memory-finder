@@ -13,11 +13,14 @@ export default function UserTypePage() {
   const [isLoading, setIsLoading] = useState(false)
 
   const selectUserType = async (userType: string) => {
+    console.log('=== USER TYPE SELECTION ===')
+    console.log('Selected user type:', userType)
     setIsLoading(true)
     
     try {
       // Store user type in localStorage for this session
       localStorage.setItem('userType', userType)
+      console.log('Stored userType in localStorage:', userType)
       
       // Redirect to dashboard
       router.push('/dashboard')
