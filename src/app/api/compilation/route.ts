@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query } from '@/lib/database'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { createCompilationJob, createSimpleCompilation, checkCompilationStatus } from '@/lib/mediaconvert'
+import { createCompilationJob, createSimpleCompilation } from '@/lib/mediaconvert'
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function selectBestMoments(moments: any[], maxDuration: number) {
+async function selectBestMoments(moments: Record<string, unknown>[], maxDuration: number) {
   // Sort by quality score and relevance
   const sortedMoments = moments.sort((a, b) => {
     const scoreA = (a.confidence || 0.5) * (a.quality_score || 0.5)
@@ -120,7 +120,7 @@ async function selectBestMoments(moments: any[], maxDuration: number) {
   return selectedMoments.sort((a, b) => a.start_time - b.start_time)
 }
 
-async function createCompilation(moments: any[], searchQuery: string, projectId: string) {
+async function createCompilation(moments: Record<string, unknown>[], searchQuery: string, projectId: string) {
   const compilationId = crypto.randomUUID()
   const compilationName = `${searchQuery} - Wedding Moments`
   

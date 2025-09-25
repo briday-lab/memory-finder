@@ -52,7 +52,7 @@ export async function createCompilationJob(
       }
     })
 
-    const response = await client.send(command)
+    await client.send(command)
     
     return {
       id: jobId,
@@ -87,7 +87,7 @@ function createMediaConvertJobSettings(moments: VideoMoment[], outputS3Key: stri
   const sortedMoments = moments.sort((a, b) => a.startTime - b.startTime)
   
   // Create input files for each moment
-  const inputs = sortedMoments.map((moment, index) => ({
+  const inputs = sortedMoments.map((moment) => ({
     FileInput: `s3://${process.env.S3_RAW_BUCKET}/${moment.s3Key}`,
     TimecodeSource: 'ZEROBASED',
     VideoSelector: {
@@ -142,8 +142,8 @@ function createMediaConvertJobSettings(moments: VideoMoment[], outputS3Key: stri
     }]
   }
 
-  // Create complex filter for concatenation
-  const complexFilter = createConcatenationFilter(sortedMoments.length)
+  // Create complex filter for concatenation (not used in current implementation)
+  // const complexFilter = createConcatenationFilter(sortedMoments.length)
 
   return {
     Inputs: inputs,
@@ -174,13 +174,12 @@ function createConcatenationFilter(inputCount: number): string {
 // Alternative approach using FFmpeg for simpler concatenation
 export async function createSimpleCompilation(
   moments: VideoMoment[],
-  outputS3Key: string
+  _outputS3Key: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // This would be implemented with AWS Batch or Lambda
     // For now, return a mock success
-    console.log(`Creating simple compilation: ${outputS3Key}`)
-    console.log(`Moments to compile:`, moments.length)
+    console.log(`Creating simple compilation with ${moments.length} moments`)
     
     // Simulate processing time
     await new Promise(resolve => setTimeout(resolve, 2000))
