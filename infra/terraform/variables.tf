@@ -7,6 +7,7 @@ variable "s3_proxies_bucket" { type = string }
 variable "s3_thumbnails_bucket" { type = string }
 variable "s3_analysis_bucket" { type = string }
 variable "s3_exports_bucket" { type = string }
+variable "s3_compilations_bucket" { type = string }
 
 variable "vpc_subnets" { type = list(string) }
 variable "vpc_security_group" { type = string }

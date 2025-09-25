@@ -6,6 +6,7 @@ s3_proxies_bucket    = "memory-finder-proxies"
 s3_thumbnails_bucket = "memory-finder-thumbnails"
 s3_analysis_bucket   = "memory-finder-analysis"
 s3_exports_bucket    = "memory-finder-exports"
+s3_compilations_bucket = "memory-finder-compilations"
 
 # Networking (default VPC resources discovered earlier)
 vpc_subnets        = [

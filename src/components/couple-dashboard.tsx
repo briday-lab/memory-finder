@@ -34,6 +34,9 @@ interface VideoMoment {
   fileName?: string
   fileSize?: number
   lastModified?: Date
+  s3_key?: string
+  compilationUrl?: string
+  isCompilation?: boolean
 }
 
 export default function CoupleDashboard() {
@@ -165,6 +168,48 @@ export default function CoupleDashboard() {
 
     setIsSearching(true)
     try {
+      // Try intelligent compilation first, fallback to simple search
+      const compilationResponse = await fetch('/api/compilation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: searchQuery,
+          projectId: selectedProject.id,
+          maxDuration: 300 // 5 minutes max
+        }),
+      })
+
+      if (compilationResponse.ok) {
+        const compilationData = await compilationResponse.json()
+        
+        if (compilationData.compilation) {
+          // Show the intelligent compilation
+          setSearchResults([{
+            id: compilationData.compilation.id,
+            start_time_seconds: 0,
+            end_time_seconds: compilationData.compilation.duration,
+            description: `${searchQuery} - Complete Experience (${compilationData.compilation.momentCount} moments)`,
+            confidence_score: 0.95,
+            video_file_id: compilationData.compilation.id,
+            fileName: compilationData.compilation.name,
+            fileSize: 0,
+            lastModified: new Date(),
+            s3_key: compilationData.compilation.s3Key,
+            compilationUrl: compilationData.compilation.streamingUrl,
+            isCompilation: true
+          }])
+          
+          // Set the compilation URL for playback
+          setVideoUrls(prev => ({
+            ...prev,
+            [compilationData.compilation.id]: compilationData.compilation.streamingUrl
+          }))
+          
+          return
+        }
+      }
+
+      // Fallback to simple search if compilation fails
       const response = await fetch('/api/search-simple', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -348,17 +393,29 @@ export default function CoupleDashboard() {
             </Card>
             )}
 
-            {/* Search Results */}
-            {searchResults.length > 0 && (
-              <div className="space-y-6">
-                <div className="text-center">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    Found {searchResults.length} moments
-                  </h3>
-                  <p className="text-gray-600">
-                    Click play to watch your special moments
-                  </p>
-                </div>
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        {searchResults[0]?.isCompilation 
+                          ? `Found Complete ${searchQuery} Experience`
+                          : `Found ${searchResults.length} moments`
+                        }
+                      </h3>
+                      <p className="text-gray-600">
+                        {searchResults[0]?.isCompilation
+                          ? `Intelligently compiled from multiple video sources`
+                          : `Click play to watch your special moments`
+                        }
+                      </p>
+                      {searchResults[0]?.isCompilation && (
+                        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm bg-pink-100 text-pink-800">
+                          <Sparkles className="h-4 w-4 mr-1" />
+                          AI-Powered Compilation
+                        </div>
+                      )}
+                    </div>
                 
                 <div className="space-y-4">
                   {searchResults.map((moment) => (

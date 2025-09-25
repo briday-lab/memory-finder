@@ -18,6 +18,7 @@ resource "aws_s3_bucket" "proxies" { bucket = var.s3_proxies_bucket }
 resource "aws_s3_bucket" "thumbnails" { bucket = var.s3_thumbnails_bucket }
 resource "aws_s3_bucket" "analysis" { bucket = var.s3_analysis_bucket }
 resource "aws_s3_bucket" "exports" { bucket = var.s3_exports_bucket }
+resource "aws_s3_bucket" "compilations" { bucket = var.s3_compilations_bucket }
 
 # EventBridge rule for raw uploads
 resource "aws_s3_bucket_notification" "raw_events" {
@@ -49,7 +50,8 @@ resource "aws_iam_role_policy" "lambda_policy" {
           aws_s3_bucket.proxies.arn, "${aws_s3_bucket.proxies.arn}/*",
           aws_s3_bucket.thumbnails.arn, "${aws_s3_bucket.thumbnails.arn}/*",
           aws_s3_bucket.analysis.arn, "${aws_s3_bucket.analysis.arn}/*",
-          aws_s3_bucket.exports.arn, "${aws_s3_bucket.exports.arn}/*"
+          aws_s3_bucket.exports.arn, "${aws_s3_bucket.exports.arn}/*",
+          aws_s3_bucket.compilations.arn, "${aws_s3_bucket.compilations.arn}/*"
       ]},
       { Effect = "Allow", Action = ["states:StartExecution","states:SendTaskSuccess","states:SendTaskFailure"], Resource = "*" },
       { Effect = "Allow", Action = ["mediaconvert:*","transcribe:*","rekognition:*","batch:SubmitJob"], Resource = "*" }
