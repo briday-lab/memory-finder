@@ -6,7 +6,7 @@ import { checkCompilationStatus } from '@/lib/mediaconvert'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const compilationId = params.id
+    const { id: compilationId } = await params
 
     if (!compilationId) {
       return NextResponse.json({ error: 'Compilation ID is required' }, { status: 400 })
