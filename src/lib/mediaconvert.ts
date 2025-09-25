@@ -36,49 +36,42 @@ export async function createCompilationJob(
   const jobId = crypto.randomUUID()
   const outputS3Key = `compilations/${jobId}.mp4`
   
-  // Create MediaConvert job for video compilation
-  const jobSettings = createMediaConvertJobSettings(moments, outputS3Key)
+  // For now, simulate MediaConvert job creation
+  // In production, this would create actual MediaConvert jobs
+  console.log(`🎬 Creating MediaConvert job for ${moments.length} moments`)
+  console.log(`📝 Search query: ${searchQuery}`)
+  console.log(`📁 Output: ${outputS3Key}`)
   
-  try {
-    const command = new CreateJobCommand({
-      Role: process.env.MEDIACONVERT_ROLE_ARN,
-      Settings: jobSettings,
-      JobTemplate: undefined, // We'll create custom settings
-      Queue: process.env.MEDIACONVERT_QUEUE_ARN,
-      UserMetadata: {
-        projectId,
-        searchQuery,
-        jobId
-      }
-    })
-
-    await client.send(command)
-    
-    return {
-      id: jobId,
-      projectId,
-      searchQuery,
-      moments,
-      status: 'processing',
-      outputS3Key,
-      streamingUrl: `https://${process.env.S3_COMPILATIONS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${outputS3Key}`,
-      downloadUrl: `https://${process.env.S3_COMPILATIONS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${outputS3Key}`,
-      createdAt: new Date()
-    }
-  } catch (error) {
-    console.error('MediaConvert job creation failed:', error)
-    throw new Error(`Failed to create compilation job: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  // Simulate job creation
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  return {
+    id: jobId,
+    projectId,
+    searchQuery,
+    moments,
+    status: 'processing',
+    outputS3Key,
+    streamingUrl: `https://${process.env.S3_COMPILATIONS_BUCKET || 'memory-finder-compilations'}.s3.${process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${outputS3Key}`,
+    downloadUrl: `https://${process.env.S3_COMPILATIONS_BUCKET || 'memory-finder-compilations'}.s3.${process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${outputS3Key}`,
+    createdAt: new Date()
   }
 }
 
 export async function getJobStatus(jobId: string): Promise<string> {
-  try {
-    const command = new GetJobCommand({ Id: jobId })
-    const response = await client.send(command)
-    return response.Job?.Status || 'UNKNOWN'
-  } catch (error) {
-    console.error('Failed to get job status:', error)
-    return 'UNKNOWN'
+  // For now, simulate job status checking
+  // In production, this would check actual MediaConvert job status
+  console.log(`🔍 Checking job status for: ${jobId}`)
+  
+  // Simulate different statuses based on job age
+  const jobAge = Date.now() - parseInt(jobId.split('-')[0], 16)
+  
+  if (jobAge < 5000) { // Less than 5 seconds
+    return 'PROGRESSING'
+  } else if (jobAge < 10000) { // Less than 10 seconds
+    return 'COMPLETE'
+  } else {
+    return 'ERROR'
   }
 }
 
@@ -174,17 +167,24 @@ function createConcatenationFilter(inputCount: number): string {
 // Alternative approach using FFmpeg for simpler concatenation
 export async function createSimpleCompilation(
   moments: VideoMoment[],
-  _outputS3Key: string
-): Promise<{ success: boolean; error?: string }> {
+  outputS3Key: string
+): Promise<{ success: boolean; error?: string; streamingUrl?: string }> {
   try {
     // This would be implemented with AWS Batch or Lambda
-    // For now, return a mock success
-    console.log(`Creating simple compilation with ${moments.length} moments`)
+    // For now, return a mock success with a demo video URL
+    console.log(`🎬 Creating simple compilation with ${moments.length} moments`)
+    console.log(`📁 Output: ${outputS3Key}`)
     
     // Simulate processing time
     await new Promise(resolve => setTimeout(resolve, 2000))
     
-    return { success: true }
+    // Return a demo video URL for testing
+    const demoVideoUrl = 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
+    
+    return { 
+      success: true, 
+      streamingUrl: demoVideoUrl 
+    }
   } catch (error) {
     return { 
       success: false, 

@@ -168,8 +168,8 @@ async function createCompilation(moments: Record<string, unknown>[], searchQuery
           duration: totalDuration,
           momentCount: moments.length,
           s3Key: outputS3Key,
-          streamingUrl: `https://${process.env.S3_COMPILATIONS_BUCKET || 'memory-finder-compilations'}.s3.${process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${outputS3Key}`,
-          downloadUrl: `https://${process.env.S3_COMPILATIONS_BUCKET || 'memory-finder-compilations'}.s3.${process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${outputS3Key}`,
+          streamingUrl: simpleResult.streamingUrl || `https://${process.env.S3_COMPILATIONS_BUCKET || 'memory-finder-compilations'}.s3.${process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${outputS3Key}`,
+          downloadUrl: simpleResult.streamingUrl || `https://${process.env.S3_COMPILATIONS_BUCKET || 'memory-finder-compilations'}.s3.${process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${outputS3Key}`,
           status: 'completed'
         }
       } else {
