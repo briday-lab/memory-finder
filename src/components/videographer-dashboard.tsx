@@ -21,9 +21,7 @@ import {
   Share2,
   BarChart3,
   Trash2,
-  Edit3,
-  Settings,
-  MoreVertical
+  Edit3
 } from 'lucide-react'
 import AnalyticsDashboard from './analytics-dashboard'
 import ShareProjectModal from './share-project-modal'
@@ -188,25 +186,6 @@ export default function VideographerDashboard() {
     }
   }
 
-  const updateProject = async (projectId: string, updates: Partial<WeddingProject>) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update project')
-      }
-
-      await loadProjects()
-      alert('Project updated successfully!')
-    } catch (error) {
-      console.error('Error updating project:', error)
-      alert('Failed to update project')
-    }
-  }
 
   const shareProject = async (data: { coupleEmail: string; coupleName: string; message: string }) => {
     if (!selectedProject) {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { 
   Share2, 
   Mail, 
-  UserPlus, 
   Copy, 
   Check,
   ExternalLink,
@@ -119,7 +118,7 @@ export default function ShareProjectModal({
             <div className="space-y-4">
               <div>
                 <Label htmlFor="coupleEmail" className="text-sm font-medium">
-                  Couple's Email Address *
+                  Couple&apos;s Email Address *
                 </Label>
                 <Input
                   id="coupleEmail"
@@ -134,7 +133,7 @@ export default function ShareProjectModal({
 
               <div>
                 <Label htmlFor="coupleName" className="text-sm font-medium">
-                  Couple's Names (Optional)
+                  Couple&apos;s Names (Optional)
                 </Label>
                 <Input
                   id="coupleName"
@@ -256,8 +255,8 @@ export default function ShareProjectModal({
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <p className="text-sm text-blue-800">
                       <strong>Next Steps:</strong> The couple can now access their wedding video project 
-                      using the link above. They'll be able to search through their memories using 
-                      natural language like "wedding vows" or "first dance".
+                      using the link above. They&apos;ll be able to search through their memories using 
+                      natural language like &quot;wedding vows&quot; or &quot;first dance&quot;.
                     </p>
                   </div>
                 </CardContent>
