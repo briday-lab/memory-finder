@@ -179,8 +179,11 @@ export default function CoupleDashboard() {
         }),
       })
 
+      console.log('Compilation response status:', compilationResponse.status)
+      
       if (compilationResponse.ok) {
         const compilationData = await compilationResponse.json()
+        console.log('Compilation data:', compilationData)
         
         if (compilationData.compilation) {
           // Show the intelligent compilation
@@ -207,6 +210,9 @@ export default function CoupleDashboard() {
           
           return
         }
+      } else {
+        const errorData = await compilationResponse.json()
+        console.log('Compilation API error:', errorData)
       }
 
       // Fallback to simple search if compilation fails

@@ -20,31 +20,65 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Step 1: Find all related moments across the project
-    const momentsResult = await query(
-      `SELECT vm.*, f.s3_key, f.filename, f.proxy_s3_key
-       FROM video_moments vm
-       JOIN files f ON vm.file_id = f.id
-       WHERE f.project_id = $1
-       AND (
-         vm.description ILIKE $2 OR
-         vm.tags::text ILIKE $2 OR
-         EXISTS (
-           SELECT 1 FROM video_transcripts vt 
-           WHERE vt.file_id = f.id 
-           AND vt.transcript_text ILIKE $2
-           AND vt.timestamp_seconds BETWEEN vm.start_time AND vm.end_time
+    // Step 1: Find all related files across the project (fallback to files if no moments)
+    let momentsResult
+    
+    try {
+      // Try to find processed video moments first
+      momentsResult = await query(
+        `SELECT vm.*, f.s3_key, f.filename, f.proxy_s3_key
+         FROM video_moments vm
+         JOIN files f ON vm.file_id = f.id
+         WHERE f.project_id = $1
+         AND (
+           vm.description ILIKE $2 OR
+           vm.tags::text ILIKE $2 OR
+           EXISTS (
+             SELECT 1 FROM video_transcripts vt 
+             WHERE vt.file_id = f.id 
+             AND vt.transcript_text ILIKE $2
+             AND vt.timestamp_seconds BETWEEN vm.start_time AND vm.end_time
+           )
          )
-       )
-       ORDER BY vm.confidence DESC, vm.start_time ASC`,
-      [projectId, `%${searchQuery}%`]
-    )
+         ORDER BY vm.confidence DESC, vm.start_time ASC`,
+        [projectId, `%${searchQuery}%`]
+      )
+    } catch (error) {
+      console.log('No video_moments table, falling back to files')
+      momentsResult = { rows: [] }
+    }
 
+    // If no processed moments, use uploaded files as mock moments
     if (momentsResult.rows.length === 0) {
-      return NextResponse.json({ 
-        results: [],
-        message: 'No moments found for this search query'
-      })
+      const filesResult = await query(
+        `SELECT f.*, p.project_name, p.bride_name, p.groom_name
+         FROM files f
+         JOIN projects p ON f.project_id = p.id
+         WHERE f.project_id = $1
+         ORDER BY f.created_at DESC`,
+        [projectId]
+      )
+
+      if (filesResult.rows.length === 0) {
+        return NextResponse.json({ 
+          results: [],
+          message: 'No files found for this project'
+        })
+      }
+
+      // Convert files to mock moments for compilation
+      momentsResult.rows = filesResult.rows.map((file, index) => ({
+        id: `mock-moment-${file.id}-${index}`,
+        file_id: file.id,
+        s3_key: file.s3_key,
+        proxy_s3_key: file.proxy_s3_key,
+        filename: file.filename,
+        start_time: 0,
+        end_time: 30, // 30 second clips
+        description: `${searchQuery} - ${file.filename}`,
+        confidence: 0.8,
+        quality_score: 0.8
+      }))
     }
 
     // Step 2: Analyze and select best moments
