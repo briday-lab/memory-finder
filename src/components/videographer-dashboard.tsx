@@ -26,6 +26,7 @@ import {
   MoreVertical
 } from 'lucide-react'
 import AnalyticsDashboard from './analytics-dashboard'
+import ShareProjectModal from './share-project-modal'
 
 interface WeddingProject {
   id: string
@@ -70,11 +71,6 @@ export default function VideographerDashboard() {
   })
   const [showShareProject, setShowShareProject] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
-  const [shareForm, setShareForm] = useState({
-    coupleEmail: '',
-    coupleName: '',
-    message: ''
-  })
 
   const loadProjects = useCallback(async () => {
     if (!session?.user?.email) return
@@ -212,53 +208,35 @@ export default function VideographerDashboard() {
     }
   }
 
-  const shareProject = async () => {
-    if (!selectedProject || !shareForm.coupleEmail) {
-      alert('Please select a project and enter couple email')
-      return
+  const shareProject = async (data: { coupleEmail: string; coupleName: string; message: string }) => {
+    if (!selectedProject) {
+      throw new Error('No project selected')
     }
 
-    try {
-      const response = await fetch('/api/projects/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId: selectedProject.id,
-          coupleEmail: shareForm.coupleEmail,
-          coupleName: shareForm.coupleName,
-          message: shareForm.message
-        })
+    const response = await fetch('/api/projects/share', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        projectId: selectedProject.id,
+        coupleEmail: data.coupleEmail,
+        coupleName: data.coupleName,
+        message: data.message
       })
+    })
 
-      if (!response.ok) {
-        throw new Error('Failed to share project')
-      }
+    if (!response.ok) {
+      throw new Error('Failed to share project')
+    }
 
-      const result = await response.json()
-      
-      setShareForm({ coupleEmail: '', coupleName: '', message: '' })
-      setShowShareProject(false)
-      await loadProjects()
-      
-      // Show success message with shareable link
-      const message = result.emailSent 
-        ? `Project shared successfully! Email sent to ${shareForm.coupleEmail}`
-        : `Project shared successfully! Email failed to send, but you can share this link: ${result.shareableLink}`
-      
-      alert(message)
-      
-      // Copy link to clipboard if available
-      if (result.shareableLink && navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(result.shareableLink)
-          console.log('Shareable link copied to clipboard')
-        } catch (clipboardError) {
-          console.log('Could not copy to clipboard:', clipboardError)
-        }
-      }
-    } catch (error) {
-      console.error('Error sharing project:', error)
-      alert('Failed to share project')
+    const result = await response.json()
+    await loadProjects()
+    
+    return {
+      success: true,
+      emailSent: result.emailSent,
+      emailError: result.emailError,
+      shareableLink: result.shareableLink,
+      invitationToken: result.invitationToken
     }
   }
 
@@ -481,66 +459,13 @@ export default function VideographerDashboard() {
                       </DialogContent>
                     </Dialog>
 
-                    {/* Share Project Dialog */}
-                    <Dialog open={showShareProject} onOpenChange={setShowShareProject}>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Share Project with Couple</DialogTitle>
-                          <DialogDescription>
-                            Invite the couple to view their wedding project
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          {selectedProject && (
-                            <div className="p-3 bg-gray-50 rounded-lg">
-                              <p className="font-medium">{selectedProject.project_name}</p>
-                              <p className="text-sm text-gray-600">
-                                {selectedProject.bride_name} + {selectedProject.groom_name}
-                              </p>
-                            </div>
-                          )}
-                          <div className="space-y-2">
-                            <Label htmlFor="couple_email">Couple&apos;s Email *</Label>
-                            <Input
-                              id="couple_email"
-                              type="email"
-                              value={shareForm.coupleEmail}
-                              onChange={(e) => setShareForm(prev => ({ ...prev, coupleEmail: e.target.value }))}
-                              placeholder="julia.tom@example.com"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="couple_name">Couple&apos;s Names (Optional)</Label>
-                            <Input
-                              id="couple_name"
-                              value={shareForm.coupleName}
-                              onChange={(e) => setShareForm(prev => ({ ...prev, coupleName: e.target.value }))}
-                              placeholder="Julia & Tom"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="message">Personal Message (Optional)</Label>
-                            <textarea
-                              id="message"
-                              className="w-full p-2 border border-gray-300 rounded-md resize-none"
-                              rows={3}
-                              value={shareForm.message}
-                              onChange={(e) => setShareForm(prev => ({ ...prev, message: e.target.value }))}
-                              placeholder="Hi! Your wedding videos are ready to view..."
-                            />
-                          </div>
-                          <div className="flex justify-end space-x-2">
-                            <Button variant="outline" onClick={() => setShowShareProject(false)}>
-                              Cancel
-                            </Button>
-                            <Button onClick={shareProject}>
-                              <Share2 className="h-4 w-4 mr-2" />
-                              Share Project
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    {/* Share Project Modal */}
+                    <ShareProjectModal
+                      isOpen={showShareProject}
+                      onClose={() => setShowShareProject(false)}
+                      projectName={selectedProject?.project_name || ''}
+                      onShare={shareProject}
+                    />
                   </div>
                 </div>
               </CardHeader>

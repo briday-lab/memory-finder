@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
 // Email configuration
 const EMAIL_CONFIG = {
@@ -19,6 +20,15 @@ const createTransporter = () => {
   }
 
   return nodemailer.createTransport(EMAIL_CONFIG)
+}
+
+// Create Resend client
+const createResendClient = () => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('Resend API key not configured.')
+    return null
+  }
+  return new Resend(process.env.RESEND_API_KEY)
 }
 
 export interface ProjectInvitationData {
@@ -44,18 +54,41 @@ export interface EmailResult {
  * Send project invitation email to couple
  */
 export async function sendProjectInvitationEmail(data: ProjectInvitationData): Promise<EmailResult> {
-  const transporter = createTransporter()
+  const invitationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/invitation/${data.invitationToken}`
   
+  // Try Resend first (more reliable)
+  const resendClient = createResendClient()
+  if (resendClient) {
+    try {
+      const result = await resendClient.emails.send({
+        from: 'Memory Finder <noreply@memory-finder.com>',
+        to: [data.coupleEmail],
+        subject: `🎥 Your Wedding Video is Ready! - ${data.projectName}`,
+        html: generateInvitationEmailHTML(data, invitationUrl),
+        text: generateInvitationEmailText(data, invitationUrl)
+      })
+      
+      console.log('Project invitation email sent via Resend:', result.data?.id)
+      
+      return {
+        success: true,
+        messageId: result.data?.id
+      }
+    } catch (error) {
+      console.error('Resend email failed, trying SMTP:', error)
+    }
+  }
+
+  // Fallback to SMTP
+  const transporter = createTransporter()
   if (!transporter) {
     return {
       success: false,
-      error: 'Email service not configured'
+      error: 'No email service configured (neither Resend nor SMTP)'
     }
   }
 
   try {
-    const invitationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/invitation/${data.invitationToken}`
-    
     const mailOptions = {
       from: `"${data.videographerName}" <${EMAIL_CONFIG.auth.user}>`,
       to: data.coupleEmail,
@@ -66,7 +99,7 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
 
     const result = await transporter.sendMail(mailOptions)
     
-    console.log('Project invitation email sent:', result.messageId)
+    console.log('Project invitation email sent via SMTP:', result.messageId)
     
     return {
       success: true,
