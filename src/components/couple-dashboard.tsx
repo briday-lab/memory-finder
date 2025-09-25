@@ -45,7 +45,6 @@ export default function CoupleDashboard() {
   const [searchResults, setSearchResults] = useState<VideoMoment[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({})
-  const [showAllVideos, setShowAllVideos] = useState(false)
 
   const loadSharedProjects = useCallback(async () => {
     if (!session?.user?.email) return
@@ -150,7 +149,7 @@ export default function CoupleDashboard() {
         // Fetch video URLs for all results
         normalized.forEach(async (moment: VideoMoment) => {
           if (moment.video_file_id) {
-            await getVideoUrl(moment.video_file_id, (moment as any).s3_key)
+            await getVideoUrl(moment.video_file_id, (moment as VideoMoment & { s3_key?: string }).s3_key)
           }
         })
       }
@@ -198,7 +197,7 @@ export default function CoupleDashboard() {
         // Fetch video URLs for all results
         normalized.forEach(async (moment: VideoMoment) => {
           if (moment.video_file_id) {
-            await getVideoUrl(moment.video_file_id, (moment as any).s3_key)
+            await getVideoUrl(moment.video_file_id, (moment as VideoMoment & { s3_key?: string }).s3_key)
           }
         })
       }
