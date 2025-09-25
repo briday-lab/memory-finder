@@ -288,6 +288,7 @@ export default function CoupleDashboard() {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Search Results */}
             {searchResults.length > 0 && (
