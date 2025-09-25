@@ -80,7 +80,7 @@ async function getVideographerAnalytics(userId: string) {
     }
 
     // Popular search queries (with fallback)
-    let popularQueries = { rows: [] }
+    let popularQueries: any = { rows: [] }
     try {
       popularQueries = await query(
         `SELECT 
@@ -101,7 +101,7 @@ async function getVideographerAnalytics(userId: string) {
     }
 
     // Recent activity (simplified to avoid complex joins)
-    let recentActivity = { rows: [] }
+    let recentActivity: any = { rows: [] }
     try {
       recentActivity = await query(
         `SELECT 
@@ -170,7 +170,7 @@ async function getCoupleAnalytics(userId: string) {
     }
 
     // Popular search queries (with fallback)
-    let popularQueries = { rows: [] }
+    let popularQueries: any = { rows: [] }
     try {
       popularQueries = await query(
         `SELECT 
@@ -208,7 +208,7 @@ async function getCoupleAnalytics(userId: string) {
     }
 
     // Recent searches (with fallback)
-    let recentSearches = { rows: [] }
+    let recentSearches: any = { rows: [] }
     try {
       recentSearches = await query(
         `SELECT 
