@@ -113,7 +113,7 @@ export const authOptions: NextAuthOptions = {
                 `INSERT INTO users (email, name, user_type) 
                  VALUES ($1, $2, $3) 
                  RETURNING id`,
-                [user.email, user.name, 'videographer'] // Default to videographer
+                [user.email, user.name || user.email.split('@')[0], 'videographer'] // Default to videographer
               )
               user.id = newUserResult.rows[0].id
               user.userType = 'videographer'
