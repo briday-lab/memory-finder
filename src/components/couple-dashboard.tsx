@@ -45,6 +45,7 @@ export default function CoupleDashboard() {
   const [searchResults, setSearchResults] = useState<VideoMoment[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({})
+  const [showAllVideos, setShowAllVideos] = useState(false)
 
   const loadSharedProjects = useCallback(async () => {
     if (!session?.user?.email) return
@@ -87,22 +88,23 @@ export default function CoupleDashboard() {
     loadSharedProjects()
   }, [loadSharedProjects])
 
-  const getVideoUrl = async (videoKey: string) => {
-    if (videoUrls[videoKey]) return videoUrls[videoKey]
+  const getVideoUrl = async (fileId: string, s3Key?: string) => {
+    if (videoUrls[fileId]) return videoUrls[fileId]
     
     try {
       const response = await fetch('/api/video-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          key: videoKey,
-          bucket: 'memory-finder-raw-120915929747-us-east-2'
+          key: s3Key,
+          bucket: 'memory-finder-raw-120915929747-us-east-2',
+          fileId: fileId
         })
       })
       
       if (response.ok) {
         const { videoUrl } = await response.json()
-        setVideoUrls(prev => ({ ...prev, [videoKey]: videoUrl }))
+        setVideoUrls(prev => ({ ...prev, [fileId]: videoUrl }))
         return videoUrl
       }
     } catch (error) {
@@ -111,19 +113,18 @@ export default function CoupleDashboard() {
     return null
   }
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim() || !selectedProject) return
+  const loadAllVideos = async () => {
+    if (!selectedProject) return
 
     setIsSearching(true)
     try {
-      const response = await fetch('/api/search-semantic', {
+      const response = await fetch('/api/search-simple', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: searchQuery,
+          query: 'all videos',
           projectId: selectedProject.id,
-          limit: 20,
-          similarityThreshold: 0.7
+          limit: 50
         }),
       })
 
@@ -133,14 +134,15 @@ export default function CoupleDashboard() {
           const result = r as Record<string, unknown>
           return {
             id: result.id || String(idx),
-            start_time_seconds: Number(result.start_time_seconds ?? result.startTime ?? 0) || 0,
-            end_time_seconds: Number(result.end_time_seconds ?? result.endTime ?? 0) || 0,
-            description: result.description ?? result.content ?? searchQuery,
-            confidence_score: Number(result.confidence_score ?? result.confidence ?? 0) || 0,
-            video_file_id: result.videoKey || result.video_file_id || result.videoId || '',
+            start_time_seconds: Number(result.startTime ?? 0) || 0,
+            end_time_seconds: Number(result.endTime ?? result.duration ?? 30) || 30,
+            description: result.description ?? result.content ?? 'Wedding video',
+            confidence_score: Number(result.confidence ?? 0.9) || 0.9,
+            video_file_id: result.fileId || result.file_id || '',
             fileName: result.fileName,
             fileSize: result.fileSize,
-            lastModified: result.lastModified
+            lastModified: result.lastModified,
+            s3_key: result.videoUrl || result.s3_key
           }
         })
         setSearchResults(normalized)
@@ -148,7 +150,55 @@ export default function CoupleDashboard() {
         // Fetch video URLs for all results
         normalized.forEach(async (moment: VideoMoment) => {
           if (moment.video_file_id) {
-            await getVideoUrl(moment.video_file_id)
+            await getVideoUrl(moment.video_file_id, (moment as any).s3_key)
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Error loading videos:', error)
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim() || !selectedProject) return
+
+    setIsSearching(true)
+    try {
+      const response = await fetch('/api/search-simple', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: searchQuery,
+          projectId: selectedProject.id,
+          limit: 20
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const normalized = (data.results || []).map((r: unknown, idx: number) => {
+          const result = r as Record<string, unknown>
+          return {
+            id: result.id || String(idx),
+            start_time_seconds: Number(result.startTime ?? 0) || 0,
+            end_time_seconds: Number(result.endTime ?? result.duration ?? 30) || 30,
+            description: result.description ?? result.content ?? searchQuery,
+            confidence_score: Number(result.confidence ?? 0.9) || 0.9,
+            video_file_id: result.fileId || result.file_id || '',
+            fileName: result.fileName,
+            fileSize: result.fileSize,
+            lastModified: result.lastModified,
+            s3_key: result.videoUrl || result.s3_key // For video URL generation
+          }
+        })
+        setSearchResults(normalized)
+        
+        // Fetch video URLs for all results
+        normalized.forEach(async (moment: VideoMoment) => {
+          if (moment.video_file_id) {
+            await getVideoUrl(moment.video_file_id, (moment as any).s3_key)
           }
         })
       }
@@ -266,6 +316,15 @@ export default function CoupleDashboard() {
                     className="bg-pink-600 hover:bg-pink-700"
                   >
                     {isSearching ? 'Searching...' : <Search className="h-5 w-5" />}
+                  </Button>
+                  <Button 
+                    onClick={loadAllVideos} 
+                    disabled={isSearching}
+                    size="lg"
+                    variant="outline"
+                    className="border-pink-300 text-pink-700 hover:bg-pink-50"
+                  >
+                    {isSearching ? 'Loading...' : 'Show All Videos'}
                   </Button>
                 </div>
 
