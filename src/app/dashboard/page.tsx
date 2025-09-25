@@ -48,7 +48,8 @@ export default function DashboardPage() {
   const userType = sessionUserType || 'videographer'
   
   // Use localStorage user type if available, otherwise use session userType
-  const finalUserType = localUserType || userType
+  // Only use localStorage value if we're on the client side
+  const finalUserType = (typeof window !== 'undefined' && localUserType) ? localUserType : userType
   
   // Debug logging
   console.log('=== DASHBOARD ROUTING DEBUG ===')
@@ -61,7 +62,7 @@ export default function DashboardPage() {
   
   // If this is a Google OAuth user (no userType in session) and no localStorage userType,
   // redirect to user type selection
-  if (!sessionUserType && !localUserType) {
+  if (!sessionUserType && (typeof window === 'undefined' || !localUserType)) {
     console.log('Google OAuth user detected, redirecting to user type selection')
     router.push('/auth/user-type')
     return null

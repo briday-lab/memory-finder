@@ -18,9 +18,11 @@ export default function UserTypePage() {
     setIsLoading(true)
     
     try {
-      // Store user type in localStorage for this session
-      localStorage.setItem('userType', userType)
-      console.log('Stored userType in localStorage:', userType)
+      // Store user type in localStorage for this session (only on client side)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userType', userType)
+        console.log('Stored userType in localStorage:', userType)
+      }
       
       // Small delay to ensure localStorage is updated
       await new Promise(resolve => setTimeout(resolve, 100))
