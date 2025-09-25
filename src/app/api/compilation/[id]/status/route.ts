@@ -42,7 +42,7 @@ export async function GET(
     }
 
     // Check MediaConvert job status if jobId exists
-    let statusInfo = { status: 'unknown', progress: 0, error: undefined }
+    let statusInfo: { status: string; progress?: number; error?: string } = { status: 'unknown', progress: 0 }
     
     if (compilation.job_id) {
       try {
