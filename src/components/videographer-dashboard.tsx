@@ -19,7 +19,11 @@ import {
   Clock,
   RefreshCw,
   Share2,
-  BarChart3
+  BarChart3,
+  Trash2,
+  Edit3,
+  Settings,
+  MoreVertical
 } from 'lucide-react'
 import AnalyticsDashboard from './analytics-dashboard'
 
@@ -166,6 +170,48 @@ export default function VideographerDashboard() {
     }
   }
 
+  const deleteProject = async (projectId: string) => {
+    if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete project')
+      }
+
+      await loadProjects()
+      alert('Project deleted successfully!')
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      alert('Failed to delete project')
+    }
+  }
+
+  const updateProject = async (projectId: string, updates: Partial<WeddingProject>) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update project')
+      }
+
+      await loadProjects()
+      alert('Project updated successfully!')
+    } catch (error) {
+      console.error('Error updating project:', error)
+      alert('Failed to update project')
+    }
+  }
+
   const shareProject = async () => {
     if (!selectedProject || !shareForm.coupleEmail) {
       alert('Please select a project and enter couple email')
@@ -188,10 +234,28 @@ export default function VideographerDashboard() {
         throw new Error('Failed to share project')
       }
 
+      const result = await response.json()
+      
       setShareForm({ coupleEmail: '', coupleName: '', message: '' })
       setShowShareProject(false)
       await loadProjects()
-      alert('Project shared successfully with the couple!')
+      
+      // Show success message with shareable link
+      const message = result.emailSent 
+        ? `Project shared successfully! Email sent to ${shareForm.coupleEmail}`
+        : `Project shared successfully! Email failed to send, but you can share this link: ${result.shareableLink}`
+      
+      alert(message)
+      
+      // Copy link to clipboard if available
+      if (result.shareableLink && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(result.shareableLink)
+          console.log('Shareable link copied to clipboard')
+        } catch (clipboardError) {
+          console.log('Could not copy to clipboard:', clipboardError)
+        }
+      }
     } catch (error) {
       console.error('Error sharing project:', error)
       alert('Failed to share project')
@@ -497,7 +561,7 @@ export default function VideographerDashboard() {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <h3 className="font-medium text-sm">{project.project_name}</h3>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1">
                           <Button
                             size="sm"
                             variant="outline"
@@ -510,6 +574,29 @@ export default function VideographerDashboard() {
                           >
                             <Share2 className="h-3 w-3 mr-1" />
                             Share
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // TODO: Add edit project functionality
+                              alert('Edit project functionality coming soon!')
+                            }}
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-xs text-red-600 hover:text-red-700"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteProject(project.id)
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
                           </Button>
                           {getStatusIcon(project.status)}
                         </div>

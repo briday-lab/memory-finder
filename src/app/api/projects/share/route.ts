@@ -124,13 +124,18 @@ export async function POST(request: NextRequest) {
       emailResult = { success: false, error: emailError instanceof Error ? emailError.message : 'Unknown email error' }
     }
 
+    // Generate shareable link
+    const shareableLink = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/invitation/${invitationToken}`
+
     return NextResponse.json({
       success: true,
       message: 'Project shared successfully and invitation sent.',
       coupleId,
       projectId,
       emailSent: emailResult.success,
-      emailError: emailResult.error
+      emailError: emailResult.error,
+      shareableLink,
+      invitationToken
     })
 
   } catch (error: unknown) {

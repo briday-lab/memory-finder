@@ -39,7 +39,8 @@ interface VideoMoment {
 export default function CoupleDashboard() {
   console.log('CoupleDashboard component loaded')
   const { data: session } = useSession()
-  const [project, setProject] = useState<WeddingProject | null>(null)
+  const [projects, setProjects] = useState<WeddingProject[]>([])
+  const [selectedProject, setSelectedProject] = useState<WeddingProject | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<VideoMoment[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -67,14 +68,15 @@ export default function CoupleDashboard() {
       const userData = await userResponse.json()
       const userId = userData.user.id
 
-      // Fetch projects shared with this couple
-      const projectsResponse = await fetch(`/api/projects?userId=${userId}&userType=couple`)
-      if (projectsResponse.ok) {
-        const { projects } = await projectsResponse.json()
-        if (projects.length > 0) {
-          setProject(projects[0]) // For now, show the first project
-        }
-      }
+            // Fetch projects shared with this couple
+            const projectsResponse = await fetch(`/api/projects?userId=${userId}&userType=couple`)
+            if (projectsResponse.ok) {
+              const { projects } = await projectsResponse.json()
+              setProjects(projects)
+              if (projects.length > 0) {
+                setSelectedProject(projects[0]) // Select the first project by default
+              }
+            }
     } catch (error) {
       console.error('Error loading shared projects:', error)
     }
@@ -110,7 +112,7 @@ export default function CoupleDashboard() {
   }
 
   const handleSearch = async () => {
-    if (!searchQuery.trim() || !project) return
+    if (!searchQuery.trim() || !selectedProject) return
 
     setIsSearching(true)
     try {
@@ -119,7 +121,7 @@ export default function CoupleDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: searchQuery,
-          projectId: project.id,
+          projectId: selectedProject.id,
           limit: 20,
           similarityThreshold: 0.7
         }),
@@ -197,28 +199,57 @@ export default function CoupleDashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {project ? (
+        {projects.length > 0 ? (
           <div className="max-w-4xl mx-auto">
-            {/* Project Header */}
-            <div className="text-center mb-12">
-              <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-pink-200 to-purple-200 rounded-full flex items-center justify-center">
-                <Users className="h-16 w-16 text-pink-600" />
+            {/* Project Selection */}
+            {projects.length > 1 && (
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Select a Project</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {projects.map((proj) => (
+                    <Card 
+                      key={proj.id}
+                      className={`cursor-pointer transition-all ${
+                        selectedProject?.id === proj.id 
+                          ? 'ring-2 ring-pink-500 bg-pink-50' 
+                          : 'hover:shadow-md'
+                      }`}
+                      onClick={() => setSelectedProject(proj)}
+                    >
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold text-gray-900 mb-2">{proj.project_name}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{formatDate(proj.wedding_date)}</p>
+                        <p className="text-xs text-gray-500">{proj.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">{project.project_name}</h1>
-              <p className="text-lg text-gray-600 mb-4">{formatDate(project.wedding_date)}</p>
-              <p className="text-gray-500 max-w-2xl mx-auto">{project.description}</p>
-            </div>
+            )}
+
+            {/* Selected Project Header */}
+            {selectedProject && (
+              <div className="text-center mb-12">
+                <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-pink-200 to-purple-200 rounded-full flex items-center justify-center">
+                  <Users className="h-16 w-16 text-pink-600" />
+                </div>
+                <h1 className="text-4xl font-bold text-gray-900 mb-2">{selectedProject.project_name}</h1>
+                <p className="text-lg text-gray-600 mb-4">{formatDate(selectedProject.wedding_date)}</p>
+                <p className="text-gray-500 max-w-2xl mx-auto">{selectedProject.description}</p>
+              </div>
+            )}
 
             {/* Search Section */}
-            <Card className="mb-8">
-              <CardContent className="p-8">
-                <div className="text-center mb-6">
-                  <Search className="h-12 w-12 mx-auto mb-4 text-pink-600" />
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Moments</h2>
-                  <p className="text-gray-600">
-                    Search for any moment from your wedding day in plain English
-                  </p>
-                </div>
+            {selectedProject && (
+              <Card className="mb-8">
+                <CardContent className="p-8">
+                  <div className="text-center mb-6">
+                    <Search className="h-12 w-12 mx-auto mb-4 text-pink-600" />
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Moments</h2>
+                    <p className="text-gray-600">
+                      Search for any moment from your wedding day in plain English
+                    </p>
+                  </div>
                 
                 <div className="flex space-x-2 mb-6">
                   <Input
@@ -256,7 +287,7 @@ export default function CoupleDashboard() {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+                </Card>
 
             {/* Search Results */}
             {searchResults.length > 0 && (
