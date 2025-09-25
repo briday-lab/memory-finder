@@ -101,9 +101,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Send invitation email
-    let emailResult = { success: false, error: 'Email service not configured' }
+    let emailResult: { success: boolean; error: string } = { success: false, error: 'Email service not configured' }
     try {
-      emailResult = await sendProjectInvitationEmail({
+      const emailResponse = await sendProjectInvitationEmail({
         videographerName: project.videographer_name,
         videographerEmail: project.videographer_email,
         projectName: project.project_name,
@@ -115,6 +115,10 @@ export async function POST(request: NextRequest) {
         coupleEmail: coupleEmail,
         coupleName: coupleName
       })
+      emailResult = { 
+        success: emailResponse.success, 
+        error: emailResponse.error || 'Unknown email error' 
+      }
     } catch (emailError) {
       console.warn('Failed to send invitation email:', emailError)
       emailResult = { success: false, error: emailError instanceof Error ? emailError.message : 'Unknown email error' }
