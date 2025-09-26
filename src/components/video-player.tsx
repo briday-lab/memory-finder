@@ -111,19 +111,19 @@ export default function VideoPlayer({
 
   return (
     <Card className={`w-full ${className}`}>
-      <CardContent className="p-6">
-        <div className="space-y-4">
+      <CardContent className="p-2"> 
+        <div className="space-y-2">
           {fileName && (
             <h4 className="font-medium text-sm text-gray-600 truncate">
               {fileName}
             </h4>
           )}
           
-          <div className="relative bg-black rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
+          <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: "40vh" }}>
             <video
               ref={videoRef}
               src={src || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
-              className="w-full h-auto min-h-[400px] object-cover"
+              className="w-full h-full object-cover min-h-0"
               preload="metadata"
               crossOrigin="anonymous"
             />

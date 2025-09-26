@@ -333,9 +333,9 @@ export default function CoupleDashboard() {
       </header>
 
       {/* Main Content - Minimal Focus */}
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-2">
         {projects.length > 0 ? (
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-5xl mx-auto space-y-2">
             {/* Compact Project Selection */}
             {projects.length > 1 && selectedProject && (
               <div className="mb-4">
@@ -355,13 +355,13 @@ export default function CoupleDashboard() {
               </div>
             )}
 
-            {/* Minimal Search Section */}
+            {/* Ultra-Compact Search Section */}
             {selectedProject && (
-              <div className="bg-white rounded-2xl shadow-lg p-4 mb-4">
-                {/* Compact Search Header */}
-                <div className="flex items-center justify-between mb-4">
+              <div className="bg-white rounded-xl shadow-lg p-2 mb-2">
+                {/* Minified Header */}
+                <div className="flex items-center justify-between mb-2">
                   <div>
-                    <h1 className="text-xl font-semibold text-gray-800">{selectedProject.project_name}</h1>
+                    <h1 className="text-base font-semibold text-gray-800">{selectedProject.project_name}</h1>
                     <p className="text-xs text-gray-500">{formatDate(selectedProject.wedding_date)}</p>
                   </div>
                   <div className="flex space-x-1">
@@ -370,7 +370,7 @@ export default function CoupleDashboard() {
                         key={index}
                         variant="outline"
                         size="sm"
-                        className="text-xs px-2 py-1 h-auto"
+                        className="text-xs px-2 py-1 h-6"
                         onClick={() => {
                           setSearchQuery(moment.query)
                           handleSearch()
@@ -382,68 +382,66 @@ export default function CoupleDashboard() {
                   </div>
                 </div>
 
-                {/* Primary Search */}
-                <div className="flex space-x-3">
+                {/* Compact Search Bar */}
+                <div className="flex space-x-2">
                   <Input
-                    placeholder="Search your wedding moments... (e.g., 'first dance', 'vows', 'cake cutting')"
+                    placeholder="Search wedding moments... (e.g., 'first dance', 'vows', 'cake cutting')"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="text-base py-3 px-4 flex-1 rounded-full"
+                    className="text-sm py-1.5 px-3 flex-1 rounded-full"
                   />
                   <Button 
                     onClick={handleSearch} 
                     disabled={isSearching}
-                    className="bg-pink-600 hover:bg-pink-700 px-6 rounded-full"
+                    className="bg-pink-600 hover:bg-pink-700 px-3 rounded-full"
                   >
-                    {isSearching ? 'Finding...' : <Search className="h-4 w-4 mr-1" />} 
+                    {isSearching ? 'Finding...' : <Search className="h-4 w-4" />} 
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* Video Player Focus - Minimal & Focused */}
+            {/* Ultra-Compact Video Player Section */}
             {searchResults.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-lg p-4">
-                {/* Single Prominent Video Player - Hero Section */}
-                <div className="space-y-3">
-                  {searchResults.map((moment) => (
-                    <div key={moment.id}>
-                      {/* Minimal Badge Info */}
-                      {moment.isCompilation && (
-                        <div className="mb-3 flex items-center space-x-2 text-xs text-purple-600">
-                          <Sparkles className="h-3 w-3" />
-                          <span>AI-Powered Compilation</span>
-                          <span className="text-gray-400">•</span>
-                          <span>{moment.momentCount || Math.max(1, Math.floor(moment.end_time_seconds / 30))} clips</span>
-                        </div>
-                      )}
-                      
-                      {/* Main Video Player - Max Width Hero */}
-                      <VideoPlayer
-                        src={
-                          moment.isCompilation 
-                            ? videoUrls[moment.video_file_id] || 
-                              (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
-                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-                            : videoUrls[moment.video_file_id] || 
-                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-                        }
-                        startTime={moment.isCompilation ? 0 : moment.start_time_seconds}
-                        endTime={moment.end_time_seconds}
-                        fileName={moment.fileName}
-                        className="w-full"
-                      />
-                    </div>
-                  ))}
-                </div>
+              <div className="bg-white rounded-xl shadow-lg p-2">
+                {searchResults.map((moment) => (
+                  <div key={moment.id}>
+                    {/* Mini Badge */}
+                    {moment.isCompilation && (
+                      <div className="mb-1 flex items-center space-x-2 text-xs text-purple-600">
+                        <Sparkles className="h-3 w-3" />
+                        <span>AI Compilation</span>
+                        <span className="text-gray-400">•</span>
+                        <span>{moment.momentCount || Math.max(1, Math.floor(moment.end_time_seconds / 30))} clips</span>
+                      </div>
+                    )}
+                    
+                    {/* Compact Video Player */}
+                    <VideoPlayer
+                      src={
+                        moment.isCompilation 
+                          ? videoUrls[moment.video_file_id] || 
+                            (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
+                            'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                          : videoUrls[moment.video_file_id] || 
+                            'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                      }
+                      startTime={moment.isCompilation ? 0 : moment.start_time_seconds}
+                      endTime={moment.end_time_seconds}
+                      fileName={moment.fileName}
+                      className="w-full"
+                    />
+                  </div>
+                ))}
                 
-                {/* Action Bar (compact) */}
+                {/* Mini Action Bar */}
                 {searchResults[0]?.isCompilation && (
-                  <div className="mt-3 flex justify-end space-x-2">
+                  <div className="mt-1 flex justify-end space-x-1">
                     <Button
                       size="sm"
                       variant="outline"
+                      className="text-xs px-2 py-1 h-6"
                       onClick={() => saveCompilation(searchResults[0])}
                     >
                       <Download className="h-3 w-3 mr-1" /> Save
@@ -451,6 +449,7 @@ export default function CoupleDashboard() {
                     <Button
                       size="sm"
                       variant="outline"
+                      className="text-xs px-2 py-1 h-6"
                       onClick={() => shareMoment(searchResults[0])}
                     >
                       <Share className="h-3 w-3 mr-1" /> Share
