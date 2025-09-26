@@ -198,6 +198,10 @@ export async function createSimpleCompilation(
           console.log(`📂 Clip ${i + 1}: ${moment.filename || moment.id} -> S3: ${moment.s3Key}`)
         }
         
+        const bucketName = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
+        console.log(`🔧 S3_RAW_BUCKET var: ${process.env.S3_RAW_BUCKET}, Bucket: ${bucketName}`)
+        console.log(`🔧 AWS credentials present: ${!!process.env.AWS_ACCESS_KEY_ID}`)
+        
         // AWS S3 Client Setup
         const s3Client = new S3Client({ 
           region: process.env.AWS_REGION || 'us-east-2',
@@ -206,8 +210,6 @@ export async function createSimpleCompilation(
             secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
           }
         })
-        
-        const bucketName = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
         
         // For each clip, generate a presigned URL
         const clipUrls = []
