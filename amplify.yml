@@ -9,7 +9,7 @@ frontend:
     build:
       commands:
         - echo "🔨 Building Next.js application..."
-        - npx next build
+        - npm run build
         - echo "✅ Build completed successfully"
   artifacts:
     baseDirectory: .next
