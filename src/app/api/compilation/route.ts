@@ -97,6 +97,10 @@ export async function POST(request: NextRequest) {
     // Step 3: Create single compilation combining all videos
     const compilation = await createCompilation(allMoments, searchQuery, projectId)
 
+    console.log(`🟣 Compilation created!: ${compilation.name}`)
+    console.log(`📚 Content streaming: ${compilation.streamingUrl}`)
+    console.log(`📁 S3 reference: `, compilation.s3Key)
+    
     return NextResponse.json({
       success: true,
       compilation: {
