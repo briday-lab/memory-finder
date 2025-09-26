@@ -200,15 +200,11 @@ export async function createSimpleCompilation(
         
         const bucketName = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
         console.log(`🔧 S3_RAW_BUCKET var: ${process.env.S3_RAW_BUCKET}, Bucket: ${bucketName}`)
-        console.log(`🔧 AWS credentials present: ${!!process.env.AWS_ACCESS_KEY_ID}`)
+        console.log(`🔧 AWS credentials present: Environment specific or IAM`)
         
-        // AWS S3 Client Setup
+        // AWS S3 Client Setup - use AWS credential chain (works in Amplify)
         const s3Client = new S3Client({ 
-          region: process.env.AWS_REGION || 'us-east-2',
-          credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
-          }
+          region: process.env.AWS_REGION || process.env.S3_REGION || 'us-east-2'
         })
         
         // For each clip, generate a presigned URL
