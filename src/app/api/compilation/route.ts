@@ -66,34 +66,33 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Convert files to mock moments for compilation
+      // Convert files to mock moments for compilation (all files combined into one compilation)
       momentsResult.rows = filesResult.rows.map((file, index) => ({
         id: `mock-moment-${file.id}-${index}`,
         file_id: file.id,
         s3_key: file.s3_key,
         proxy_s3_key: file.proxy_s3_key,
         filename: file.filename,
-        start_time: 0,
-        end_time: 30, // 30 second clips
+        start_time: index * 30, // Sequential timing: first video at 0-30s, second at 30-60s, etc.
+        end_time: (index + 1) * 30, // So each video takes 30 seconds in sequential timeline
         description: `${searchQuery} - ${file.filename}`,
         confidence: 0.8,
         quality_score: 0.8
       }))
     }
 
-    // Step 2: Analyze and select best moments
-    const selectedMoments = await selectBestMoments(momentsResult.rows, maxDuration)
-
-    // If no moments selected, return early
-    if (selectedMoments.length === 0) {
+    // Step 2: Use all available moments (no selection, just combine all)
+    const allMoments = momentsResult.rows
+    
+    if (allMoments.length === 0) {
       return NextResponse.json({ 
-        results: [],
-        message: 'No suitable moments found for compilation'
+        compilation: null,
+        message: 'No files found for compilation'
       })
     }
 
-    // Step 3: Create compilation
-    const compilation = await createCompilation(selectedMoments, searchQuery, projectId)
+    // Step 3: Create single compilation combining all videos
+    const compilation = await createCompilation(allMoments, searchQuery, projectId)
 
     return NextResponse.json({
       success: true,
@@ -106,7 +105,7 @@ export async function POST(request: NextRequest) {
         streamingUrl: compilation.streamingUrl,
         downloadUrl: compilation.downloadUrl
       },
-      moments: selectedMoments.map(moment => ({
+      moments: allMoments.map(moment => ({
         id: moment.id,
         filename: moment.filename,
         startTime: moment.start_time,
