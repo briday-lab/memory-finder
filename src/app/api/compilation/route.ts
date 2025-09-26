@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Convert files to mock moments for compilation (all files combined into one compilation)
+      console.log(`📂 Found ${filesResult.rows.length} files to compile`)
       momentsResult.rows = filesResult.rows.map((file, index) => ({
         id: `mock-moment-${file.id}-${index}`,
         file_id: file.id,
@@ -79,6 +80,8 @@ export async function POST(request: NextRequest) {
         confidence: 0.8,
         quality_score: 0.8
       }))
+      
+      console.log(`🎬 Converting ${momentsResult.rows.length} files into compilation moments for project ${projectId}`)
     }
 
     // Step 2: Use all available moments (no selection, just combine all)
