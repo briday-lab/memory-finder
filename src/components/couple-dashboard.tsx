@@ -332,311 +332,150 @@ export default function CoupleDashboard() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      {/* Main Content - Minimal Focus */}
+      <main className="container mx-auto px-4 py-6">
         {projects.length > 0 ? (
-          <div className="max-w-4xl mx-auto">
-            {/* Project Selection */}
-            {projects.length > 1 && (
-              <div className="mb-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Select a Project</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="max-w-7xl mx-auto">
+            {/* Compact Project Selection */}
+            {projects.length > 1 && selectedProject && (
+              <div className="mb-4">
+                <div className="flex items-center justify-center space-x-2">
                   {projects.map((proj) => (
-                    <Card 
-                      key={proj.id}
-                      className={`cursor-pointer transition-all ${
-                        selectedProject?.id === proj.id 
-                          ? 'ring-2 ring-pink-500 bg-pink-50' 
-                          : 'hover:shadow-md'
-                      }`}
-                      onClick={() => setSelectedProject(proj)}
-                    >
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-2">{proj.project_name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{formatDate(proj.wedding_date)}</p>
-                        <p className="text-xs text-gray-500">{proj.description}</p>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Selected Project Header */}
-            {selectedProject && (
-              <div className="text-center mb-12">
-                <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-pink-200 to-purple-200 rounded-full flex items-center justify-center">
-                  <Users className="h-16 w-16 text-pink-600" />
-                </div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">{selectedProject.project_name}</h1>
-                <p className="text-lg text-gray-600 mb-4">{formatDate(selectedProject.wedding_date)}</p>
-                <p className="text-gray-500 max-w-2xl mx-auto">{selectedProject.description}</p>
-              </div>
-            )}
-
-            {/* Search Section */}
-            {selectedProject && (
-              <Card className="mb-8">
-                <CardContent className="p-8">
-                  <div className="text-center mb-6">
-                    <Search className="h-12 w-12 mx-auto mb-4 text-pink-600" />
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Find Your Perfect Moments</h2>
-                    <p className="text-gray-600">
-                      Search for any moment from your wedding day in plain English
-                    </p>
-                  </div>
-                
-                <div className="flex space-x-2 mb-6">
-                  <Input
-                    placeholder="Search for moments... (e.g., 'wedding vows', 'first dance', 'cake cutting')"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="text-lg py-3"
-                  />
-                  <Button 
-                    onClick={handleSearch} 
-                    disabled={isSearching}
-                    size="lg"
-                    className="bg-pink-600 hover:bg-pink-700"
-                  >
-                    {isSearching ? 'Searching...' : <Search className="h-5 w-5" />}
-                  </Button>
-                  <Button 
-                    onClick={loadAllVideos} 
-                    disabled={isSearching}
-                    size="lg"
-                    variant="outline"
-                    className="border-pink-300 text-pink-700 hover:bg-pink-50"
-                  >
-                    {isSearching ? 'Loading...' : 'Show All Videos'}
-                  </Button>
-                </div>
-
-                {/* Recent Searches */}
-                {recentSearches.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Searches</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {recentSearches.map((search, idx) => (
-                        <Button
-                          key={idx}
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => {
-                            setSearchQuery(search)
-                            handleSearch()
-                          }}
-                        >
-                          {search}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Featured Moments */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {featuredMoments.map((moment, index) => (
                     <Button
-                      key={index}
-                      variant="outline"
-                      className="h-20 flex flex-col items-center justify-center space-y-2 hover:bg-pink-50 hover:border-pink-200"
-                      onClick={() => {
-                        setSearchQuery(moment.query)
-                        handleSearch()
-                      }}
+                      key={proj.id}
+                      variant={selectedProject?.id === proj.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedProject(proj)}
+                      className={selectedProject?.id === proj.id ? "bg-pink-600" : ""}
                     >
-                      <span className="text-2xl">{moment.icon}</span>
-                      <span className="text-sm font-medium">{moment.title}</span>
+                      {proj.project_name}
                     </Button>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-            )}
-
-                {/* Search Results */}
-                {searchResults.length > 0 && (
-                  <div className="space-y-6">
-                    <div className="text-center">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                        {searchResults[0]?.isCompilation 
-                          ? `Found Complete ${searchQuery} Experience`
-                          : `Found ${searchResults.length} moments`
-                        }
-                      </h3>
-                      <p className="text-gray-600">
-                        {searchResults[0]?.isCompilation
-                          ? `Intelligently compiled from multiple video sources`
-                          : `Click play to watch your special moments`
-                        }
-                      </p>
-                      {searchResults[0]?.isCompilation && (
-                        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm bg-pink-100 text-pink-800">
-                          <Sparkles className="h-4 w-4 mr-1" />
-                          AI-Powered Compilation
-                        </div>
-                      )}
-                    </div>
-                
-                <div className="space-y-4">
-                  {searchResults.map((moment) => (
-                    <div key={moment.id} className="space-y-2">
-                      {/* Video Moment Controls */}
-                      <div className="flex items-center justify-between bg-pink-50 rounded-lg p-4">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-pink-900">{moment.description}</h4>
-                          <p className="text-sm text-pink-600">
-                            {moment.fileName && `from ${moment.fileName} • `}
-                            {moment.duration && `${Math.floor(moment.duration)} seconds`}
-                            {moment.emotion && ` • ${moment.emotion}`}
-                            {moment.scene_type && ` • ${moment.scene_type}`}
-                          </p>
-                        </div>
-                        <div className="flex space-x-2">
-                          {moment.isCompilation ? (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-purple-600 hover:text-purple-700"
-                                onClick={() => saveCompilation(moment)}
-                              >
-                                <Download className="h-4 w-4 mr-1" />
-                                Save
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-purple-600 hover:text-purple-700"
-                                onClick={() => shareMoment(moment)}
-                              >
-                                <Share className="h-4 w-4 mr-1" />
-                                Share
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button 
-                                size="sm"
-                                variant="ghost"
-                                className="text-pink-600"
-                                onClick={() => saveCompilation(moment)}
-                              >
-                                Save
-                              </Button>
-                              <Button 
-                                size="sm"
-                                variant="ghost"
-                                className="text-pink-600"
-                                onClick={() => shareMoment(moment)}
-                              >
-                                <Share className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      {moment.isCompilation ? (
-                        <>
-                          <div className="mb-4 p-4 bg-purple-50 rounded-lg">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Sparkles className="h-4 w-4 text-purple-600" />
-                              <span className="font-medium text-purple-900">AI-Powered Wedding Compilation</span>
-                            </div>
-                            <p className="text-sm text-purple-600">
-                              Combined from {moment.momentCount || Math.max(1, Math.floor(moment.end_time_seconds / 30))} wedding moments
-                            </p>
-                          </div>
-                          <VideoPlayer
-                            src={
-                              videoUrls[moment.video_file_id] || 
-                              (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
-                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-                            }
-                            startTime={0}
-                            endTime={moment.end_time_seconds}
-                            fileName={moment.fileName}
-                            className="max-w-6xl mx-auto"
-                          />
-                        </>
-                      ) : (
-                        <VideoPlayer
-                          src={videoUrls[moment.video_file_id] || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
-                          startTime={moment.start_time_seconds}
-                          endTime={moment.end_time_seconds}
-                          fileName={moment.fileName}
-                          className="max-w-6xl mx-auto"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
 
-            {/* Saved Compilations */}
-            {savedCompilations.length > 0 && (
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Download className="h-5 w-5" />
-                    <span>Saved Moments</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {savedCompilations.map((moment) => (
-                      <div key={moment.id} className="bg-pink-50 rounded-lg p-4">
-                        <h4 className="font-semibold text-pink-900 mb-2">{moment.description}</h4>
-                        <p className="text-sm text-pink-600 mb-3">
-                          Duration: {moment.end_time_seconds - moment.start_time_seconds}s
-                          {moment.emotion && ` • ${moment.emotion}`}
-                        </p>
-                        <div className="flex justify-end space-x-2">
-                          <Button 
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => shareMoment(moment)}
-                          >
-                            <Share className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+            {/* Minimal Search Section */}
+            {selectedProject && (
+              <div className="bg-white rounded-2xl shadow-lg p-4 mb-4">
+                {/* Compact Search Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h1 className="text-xl font-semibold text-gray-800">{selectedProject.project_name}</h1>
+                    <p className="text-xs text-gray-500">{formatDate(selectedProject.wedding_date)}</p>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Empty State */}
-            {searchQuery && searchResults.length === 0 && !isSearching && (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Sparkles className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-xl font-medium mb-2">No moments found</h3>
-                  <p className="text-gray-600 mb-6">
-                    Try searching for different moments from your wedding day
-                  </p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {featuredMoments.map((moment, index) => (
+                  <div className="flex space-x-1">
+                    {featuredMoments.slice(0, 3).map((moment, index) => (
                       <Button
                         key={index}
                         variant="outline"
                         size="sm"
+                        className="text-xs px-2 py-1 h-auto"
                         onClick={() => {
                           setSearchQuery(moment.query)
                           handleSearch()
                         }}
                       >
-                        {moment.title}
+                        {moment.icon}
                       </Button>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                {/* Primary Search */}
+                <div className="flex space-x-3">
+                  <Input
+                    placeholder="Search your wedding moments... (e.g., 'first dance', 'vows', 'cake cutting')"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    className="text-base py-3 px-4 flex-1 rounded-full"
+                  />
+                  <Button 
+                    onClick={handleSearch} 
+                    disabled={isSearching}
+                    className="bg-pink-600 hover:bg-pink-700 px-6 rounded-full"
+                  >
+                    {isSearching ? 'Finding...' : <Search className="h-4 w-4 mr-1" />} 
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Video Player Focus - Minimal & Focused */}
+            {searchResults.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-lg p-4">
+                {/* Single Prominent Video Player - Hero Section */}
+                <div className="space-y-3">
+                  {searchResults.map((moment) => (
+                    <div key={moment.id}>
+                      {/* Minimal Badge Info */}
+                      {moment.isCompilation && (
+                        <div className="mb-3 flex items-center space-x-2 text-xs text-purple-600">
+                          <Sparkles className="h-3 w-3" />
+                          <span>AI-Powered Compilation</span>
+                          <span className="text-gray-400">•</span>
+                          <span>{moment.momentCount || Math.max(1, Math.floor(moment.end_time_seconds / 30))} clips</span>
+                        </div>
+                      )}
+                      
+                      {/* Main Video Player - Max Width Hero */}
+                      <VideoPlayer
+                        src={
+                          moment.isCompilation 
+                            ? videoUrls[moment.video_file_id] || 
+                              (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
+                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                            : videoUrls[moment.video_file_id] || 
+                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                        }
+                        startTime={moment.isCompilation ? 0 : moment.start_time_seconds}
+                        endTime={moment.end_time_seconds}
+                        fileName={moment.fileName}
+                        className="w-full"
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Action Bar (compact) */}
+                {searchResults[0]?.isCompilation && (
+                  <div className="mt-3 flex justify-end space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => saveCompilation(searchResults[0])}
+                    >
+                      <Download className="h-3 w-3 mr-1" /> Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => shareMoment(searchResults[0])}
+                    >
+                      <Share className="h-3 w-3 mr-1" /> Share
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Simple Empty/Loading States - Minimal */}
+            {searchResults.length === 0 && !isSearching && searchQuery && (
+              <div className="text-center py-8">
+                <Search className="h-10 w-10 mx-auto text-gray-400 mb-3" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No moments found</h3>
+                <p className="text-gray-500">Try searching for different moments from your wedding</p>
+              </div>
+            )}
+            
+            {isSearching && (
+              <div className="text-center py-8">
+                <div className="inline-flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-pink-600"></div>
+                  <span className="text-gray-600">Finding your moments...</span>
+                </div>
+              </div>
             )}
           </div>
         ) : (
