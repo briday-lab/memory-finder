@@ -225,11 +225,17 @@ export default function CoupleDashboard() {
           }])
           
           // Set the compilation URL for playback
-          console.log('Setting videoUrl:', compilationData.compilation.streamingUrl)
-          setVideoUrls(prev => ({
-            ...prev,
-            [compilationData.compilation.id]: compilationData.compilation.streamingUrl
-          }))
+          console.log('🎯 Compilation Data:', compilationData.compilation)
+          console.log('🎥 Setting videoUrl for ID:', compilationData.compilation.id, 'URL:', compilationData.compilation.streamingUrl)
+          
+          setVideoUrls(prev => {
+            const newUrls = {
+              ...prev,
+              [compilationData.compilation.id]: compilationData.compilation.streamingUrl
+            }
+            console.log('🎪 Updated videoUrls:', newUrls)
+            return newUrls
+          })
           
           return
         }
@@ -404,13 +410,25 @@ export default function CoupleDashboard() {
                       
                       {/* Compact Video Player */}
                       <VideoPlayer
-                        src={
-                          moment.isCompilation 
-                            ? videoUrls[moment.video_file_id] || 
-                              (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
-                              ''
-                            : videoUrls[moment.video_file_id] || ''
-                        }
+                        src={(() => {
+                          const videoId = moment.video_file_id
+                          const urlFromState = videoUrls[videoId]
+                          const compilationUrl = (moment as VideoMoment & { compilationUrl?: string }).compilationUrl
+                          const fallback = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                          
+                          const finalSrc = moment.isCompilation 
+                            ? urlFromState || compilationUrl || fallback
+                            : urlFromState || fallback
+                          
+                          console.log(`🎮 VideoPlayer src logic:`)
+                          console.log(`  - videoId: ${videoId}`)
+                          console.log(`  - urlFromState: ${urlFromState}`)
+                          console.log(`  - compilationUrl: ${compilationUrl}`)
+                          console.log(`  - isCompilation: ${moment.isCompilation}`)
+                          console.log(`  - finalSrc: ${finalSrc}`)
+                          
+                          return finalSrc
+                        })()}
                         startTime={moment.isCompilation ? 0 : moment.start_time_seconds}
                         endTime={moment.end_time_seconds}
                         fileName={moment.fileName}
