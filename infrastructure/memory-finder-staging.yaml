@@ -1,0 +1,206 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Memory Finder - Staging Environment'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'staging'
+    AllowedValues: ['staging']
+    Description: 'Environment identifier'
+
+Resources:
+  # ============================================================================
+  # S3 Buckets for Video Storage (STAGING - Production-like)
+  # ============================================================================
+  RawVideoBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'memory-finder-staging-raw-${AWS::AccountId}-${AWS::Region}'
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionToIA
+            Status: Enabled
+            Transitions:
+              - StorageClass: STANDARD_IA
+                TransitionInDays: 30
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+            AllowedOrigins: ['*']
+            MaxAge: 3000
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-raw-videos'
+        - Key: Environment
+          Value: staging
+
+  ProcessedVideoBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'memory-finder-staging-processed-${AWS::AccountId}-${AWS::Region}'
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-processed-videos'
+        - Key: Environment
+          Value: staging
+
+  # ============================================================================
+  # DynamoDB Tables (STAGING)
+  # ============================================================================
+  ProjectsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-projects-staging'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: videographer_id
+          AttributeType: S
+        - AttributeName: created_at
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: VideographerIndex
+          KeySchema:
+            - AttributeName: videographer_id
+              KeyType: HASH
+            - AttributeName: created_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true  # Backup enabled for staging
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-projects-table'
+        - Key: Environment
+          Value: staging
+
+  FilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-files-staging'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: project_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ProjectIndex
+          KeySchema:
+            - AttributeName: project_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-files-table'
+        - Key: Environment
+          Value: staging
+
+  # ============================================================================
+  # Lambda Functions (STAGING)
+  # ============================================================================
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-lambda-execution-role-staging'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonRekognitionFullAccess
+
+  VideoProcessingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-video-processing-staging'
+      Runtime: python3.9
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 600  # Production-like timeout
+      MemorySize: 1024  # Production-like memory
+      Environment:
+        Variables:
+          ENVIRONMENT: staging
+          RAW_BUCKET: !Ref RawVideoBucket
+          PROCESSED_BUCKET: !Ref ProcessedVideoBucket
+          PROJECTS_TABLE: !Ref ProjectsTable
+          FILES_TABLE: !Ref FilesTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          
+          def handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Staging video processing ready')
+              }
+
+  # ============================================================================
+  # CloudWatch Alarms (STAGING - Limited Monitoring)
+  # ============================================================================
+  LambdaErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${AWS::StackName}-lambda-errors-staging'
+      AlarmDescription: 'Lambda function errors'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref VideoProcessingFunction
+      TreatMissingData: notBreaching
+      Tags:
+        - Key: Environment
+          Value: staging
+
+Outputs:
+  RawVideoBucketStaging:
+    Description: 'Staging raw video S3 bucket'
+    Value: !Ref RawVideoBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-RawVideo-Bucket-Staging'
+
+  ProcessedVideoBucketStaging:
+    Description: 'Staging processed video S3 bucket'
+    Value: !Ref ProcessedVideoBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ProcessedVideo-Bucket-Staging'
+
+  ProjectsTableStaging:
+    Description: 'Staging projects table'
+    Value: !Ref ProjectsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ProjectsTable-Staging'
+
+  LambdaExecutionRoleStaging:
+    Description: 'Staging Lambda execution role'
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-Lambda-Role-Staging'

@@ -1,0 +1,163 @@
+name: Memory Finder Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main        # Deploy to PROD (production)
+      - staging     # Deploy to STAGING
+      - dev         # Deploy to DEV
+  pull_request:
+    branches:
+      - main
+      - staging
+
+jobs:
+  # ============================================================================
+  # Testing
+  # ============================================================================
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run TypeScript check
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+
+  # ============================================================================
+  # DEV Environment Deployment
+  # ============================================================================
+  deploy-dev:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    environment: dev
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Deploy DEV infrastructure
+        run: |
+          aws cloudformation deploy \
+            --template-file infrastructure/memory-finder-dev.yaml \
+            --stack-name memory-finder-dev \
+            --parameter-overrides Environment=dev \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+      - name: Deploy DEV application
+        run: npm run deploy:dev
+
+  # ============================================================================
+  # STAGING Environment Deployment
+  # ============================================================================
+  deploy-staging:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Deploy STAGING infrastructure
+        run: |
+          aws cloudformation deploy \
+            --template-file infrastructure/memory-finder-staging.yaml \
+            --stack-name memory-finder-staging \
+            --parameter-overrides Environment=staging \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+      - name: Deploy STAGING application
+        run: npm run deploy:staging
+
+      - name: Run integration tests
+        run: npm run test:integration:staging
+
+  # ============================================================================
+  # PROD Environment Deployment (Manual Approval)
+  # ============================================================================
+  deploy-prod:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Deploy PROD infrastructure
+        run: |
+          aws cloudformation deploy \
+            --template-file infrastructure/memory-finder-infrastructure.yaml \
+            --stack-name memory-finder-prod \
+            --parameter-overrides Environment=prod \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+      - name: Deploy PROD application
+        run: npm run deploy:prod
+
+      - name: Run smoke tests
+        run: npm run test:smoke:prod
+
+  # ============================================================================
+  # Cleanup (Optional)
+  # ============================================================================
+  cleanup-dev:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    needs: [] 
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Clean DEV resources
+        run: |
+          # Download old files only
+          aws s3 sync s3://memory-finder-dev-raw-${{ github.run_id }} s3://memory-finder-dev-raw-${{ github.run_id }}
+          # Keep only last 10 versions

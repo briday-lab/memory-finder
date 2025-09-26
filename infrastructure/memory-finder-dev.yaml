@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Memory Finder - Development Environment'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'dev'
+    AllowedValues: ['dev']
+    Description: 'Environment identifier'
+
+Resources:
+  # ============================================================================
+  # S3 Buckets for Video Storage (DEV)
+  # ============================================================================
+  RawVideoBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'memory-finder-dev-raw-${AWS::AccountId}-${AWS::Region}'
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteObjects
+            Status: Enabled
+            ExpirationInDays: 7  # Dev objects auto-delete after 7 days
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+            AllowedOrigins: ['*']
+            MaxAge: 3000
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-raw-videos'
+        - Key: Environment
+          Value: dev
+
+  # ============================================================================
+  # DynamoDB Tables (DEV)
+  # ============================================================================
+  ProjectsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${AWS::StackName}-projects-dev'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: videographer_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: VideographerIndex
+          KeySchema:
+            - AttributeName: videographer_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-projects-table'
+        - Key: Environment
+          Value: dev
+
+  # ============================================================================
+  # Lambda Functions (DEV)
+  # ============================================================================
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-lambda-execution-role-dev'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+
+  VideoProcessingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${AWS::StackName}-video-processing-dev'
+      Runtime: python3.9
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300  # Shorter timeout for dev
+      MemorySize: 512  # Less memory for dev
+      Environment:
+        Variables:
+          ENVIRONMENT: dev
+          RAW_BUCKET: !Ref RawVideoBucket
+          PROJECTS_TABLE: !Ref ProjectsTable
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          
+          def handler(event, context):
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Dev video processing ready')
+              }
+
+Outputs:
+  RawVideoBucketDev:
+    Description: 'Dev raw video S3 bucket'
+    Value: !Ref RawVideoBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-RawVideo-Bucket-Dev'
+
+  ProjectsTableDev:
+    Description: 'Dev projects table'
+    Value: !Ref ProjectsTable
+    Export:
+      Name: !Sub '${AWS::StackName}-ProjectsTable-Dev'
+
+  LambdaExecutionRoleDev:
+    Description: 'Dev Lambda execution role'
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-Lambda-Role-Dev'
