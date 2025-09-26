@@ -84,6 +84,14 @@ export async function POST(request: NextRequest) {
     // Step 2: Analyze and select best moments
     const selectedMoments = await selectBestMoments(momentsResult.rows, maxDuration)
 
+    // If no moments selected, return early
+    if (selectedMoments.length === 0) {
+      return NextResponse.json({ 
+        results: [],
+        message: 'No suitable moments found for compilation'
+      })
+    }
+
     // Step 3: Create compilation
     const compilation = await createCompilation(selectedMoments, searchQuery, projectId)
 

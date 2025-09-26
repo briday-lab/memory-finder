@@ -11,7 +11,15 @@ import {
   Search, 
   LogOut, 
   Sparkles,
-  Users
+  Users,
+  Play,
+  Download,
+  Share,
+  Zap,
+  Eye,
+  Clock,
+  Volume,
+  Mic
 } from 'lucide-react'
 
 interface WeddingProject {
@@ -37,6 +45,10 @@ interface VideoMoment {
   s3_key?: string
   compilationUrl?: string
   isCompilation?: boolean
+  duration?: number
+  tags?: string[]
+  emotion?: string
+  scene_type?: string
 }
 
 export default function CoupleDashboard() {
@@ -48,6 +60,10 @@ export default function CoupleDashboard() {
   const [searchResults, setSearchResults] = useState<VideoMoment[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({})
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
+  const [savedCompilations, setSavedCompilations] = useState<VideoMoment[]>([])
+  const [showTranscripts, setShowTranscripts] = useState(false)
+  const [activeMoment, setActiveMoment] = useState<VideoMoment | null>(null)
 
   const loadSharedProjects = useCallback(async () => {
     if (!session?.user?.email) return
@@ -165,6 +181,12 @@ export default function CoupleDashboard() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim() || !selectedProject) return
+    
+    // Add to recent searches
+    setRecentSearches(prev => {
+      const updated = [searchQuery, ...prev.filter(q => q !== searchQuery)]
+      return updated.slice(0, 5) // Keep last 5 searches
+    })
 
     setIsSearching(true)
     try {
@@ -240,7 +262,11 @@ export default function CoupleDashboard() {
             fileName: result.fileName,
             fileSize: result.fileSize,
             lastModified: result.lastModified,
-            s3_key: result.videoUrl || result.s3_key // For video URL generation
+            s3_key: result.videoUrl || result.s3_key, // For video URL generation
+            duration: result.duration,
+            tags: result.tags || [],
+            emotion: result.emotion,
+            scene_type: result.scene_type
           }
         })
         setSearchResults(normalized)
@@ -256,6 +282,28 @@ export default function CoupleDashboard() {
       console.error('Search error:', error)
     } finally {
       setIsSearching(false)
+    }
+  }
+
+  const saveCompilation = (moment: VideoMoment) => {
+    if (!savedCompilations.find(saved => saved.id === moment.id)) {
+      setSavedCompilations(prev => [...prev, moment])
+    }
+  }
+
+  const shareMoment = async (moment: VideoMoment) => {
+    // Implementation for sharing a video moment
+    const shareableData = {
+      url: videoUrls[moment.video_file_id],
+      text: `${moment.description} - ${moment.start_time_seconds}s - ${moment.end_time_seconds}s`
+    }
+    
+    if (navigator.share) {
+      await navigator.share(shareableData)
+    } else {
+      // Fallback for copy to clipboard
+      await navigator.clipboard.writeText(shareableData.text)
+      alert('Moment details copied to clipboard!')
     }
   }
 
@@ -378,6 +426,29 @@ export default function CoupleDashboard() {
                   </Button>
                 </div>
 
+                {/* Recent Searches */}
+                {recentSearches.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Recent Searches</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {recentSearches.map((search, idx) => (
+                        <Button
+                          key={idx}
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => {
+                            setSearchQuery(search)
+                            handleSearch()
+                          }}
+                        >
+                          {search}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Featured Moments */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {featuredMoments.map((moment, index) => (
@@ -425,17 +496,107 @@ export default function CoupleDashboard() {
                 
                 <div className="space-y-4">
                   {searchResults.map((moment) => (
-                    <VideoPlayer
-                      key={moment.id}
-                      src={videoUrls[moment.video_file_id] || ''}
-                      startTime={moment.start_time_seconds}
-                      endTime={moment.end_time_seconds}
-                      fileName={moment.fileName}
-                      className="max-w-3xl mx-auto"
-                    />
+                    <div key={moment.id} className="space-y-2">
+                      {/* Video Moment Controls */}
+                      <div className="flex items-center justify-between bg-pink-50 rounded-lg p-4">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-pink-900">{moment.description}</h4>
+                          <p className="text-sm text-pink-600">
+                            {moment.fileName && `from ${moment.fileName} • `}
+                            {moment.duration && `${Math.floor(moment.duration)} seconds`}
+                            {moment.emotion && ` • ${moment.emotion}`}
+                            {moment.scene_type && ` • ${moment.scene_type}`}
+                          </p>
+                        </div>
+                        <div className="flex space-x-2">
+                          {moment.isCompilation ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-purple-600 hover:text-purple-700"
+                                onClick={() => saveCompilation(moment)}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-purple-600 hover:text-purple-700"
+                                onClick={() => shareMoment(moment)}
+                              >
+                                <Share className="h-4 w-4 mr-1" />
+                                Share
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button 
+                                size="sm"
+                                variant="ghost"
+                                className="text-pink-600"
+                                onClick={() => saveCompilation(moment)}
+                              >
+                                Save
+                              </Button>
+                              <Button 
+                                size="sm"
+                                variant="ghost"
+                                className="text-pink-600"
+                                onClick={() => shareMoment(moment)}
+                              >
+                                <Share className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <VideoPlayer
+                        src={videoUrls[moment.video_file_id] || ''}
+                        startTime={moment.start_time_seconds}
+                        endTime={moment.end_time_seconds}
+                        fileName={moment.fileName}
+                        className="max-w-3xl mx-auto"
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Saved Compilations */}
+            {savedCompilations.length > 0 && (
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Download className="h-5 w-5" />
+                    <span>Saved Moments</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {savedCompilations.map((moment) => (
+                      <div key={moment.id} className="bg-pink-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-pink-900 mb-2">{moment.description}</h4>
+                        <p className="text-sm text-pink-600 mb-3">
+                          Duration: {moment.end_time_seconds - moment.start_time_seconds}s
+                          {moment.emotion && ` • ${moment.emotion}`}
+                        </p>
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => shareMoment(moment)}
+                          >
+                            <Share className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {/* Empty State */}

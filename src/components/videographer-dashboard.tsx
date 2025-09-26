@@ -21,7 +21,13 @@ import {
   Share2,
   BarChart3,
   Trash2,
-  Edit3
+  Edit3,
+  Settings,
+  Play,
+  Download,
+  Sparkles,
+  Eye,
+  Zap
 } from 'lucide-react'
 import AnalyticsDashboard from './analytics-dashboard'
 import ShareProjectModal from './share-project-modal'
@@ -60,6 +66,9 @@ export default function VideographerDashboard() {
   const [isCreatingProject, setIsCreatingProject] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [processingStatus, setProcessingStatus] = useState<Record<string, string>>({})
+  const [showFileDetails, setShowFileDetails] = useState(false)
+  const [activeFileId, setActiveFileId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [newProject, setNewProject] = useState({
     bride_name: '',
@@ -69,6 +78,8 @@ export default function VideographerDashboard() {
   })
   const [showShareProject, setShowShareProject] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
+  const [showProcessingQueue, setShowProcessingQueue] = useState(false)
+  const [processingFiles, setProcessingFiles] = useState<File[]>([])
 
   const loadProjects = useCallback(async () => {
     if (!session?.user?.email) return
@@ -318,6 +329,81 @@ export default function VideographerDashboard() {
         return <Clock className="h-4 w-4 text-yellow-500" />
       default:
         return <Clock className="h-4 w-4 text-gray-400" />
+    }
+  }
+
+  const startIntelligentProcessing = async (projectId: string) => {
+    try {
+      const response = await fetch('/api/ai/process-project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          mode: 'intelligent'
+        })
+      })
+
+      if (response.ok) {
+        alert('Intelligent AI processing started! This may take 5-15 minutes.')
+        loadProjects()
+      }
+    } catch (error) {
+      console.error('Error starting intelligent processing:', error)
+    }
+  }
+
+  const previewCompilation = async (searchQuery: string, projectId: string) => {
+    try {
+      const response = await fetch('/api/compilation/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: searchQuery,
+          projectId
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Show preview of compilation result
+        return data
+      }
+    } catch (error) {
+      console.error('Error previewing compilation:', error)
+    }
+  }
+
+  const checkProcessingStatus = async (fileId: string) => {
+    try {
+      const response = await fetch(`/api/files/${fileId}/status`)
+      if (response.ok) {
+        const { status } = await response.json()
+        setProcessingStatus(prev => ({ ...prev, [fileId]: status }))
+      }
+    } catch (error) {
+      console.error('Error checking processing status:', error)
+    }
+  }
+
+  const createCompilation = async (searchQuery: string, projectId: string) => {
+    try {
+      const response = await fetch('/api/compilation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: searchQuery,
+          projectId,
+          maxDuration: 300
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        alert('AI compilation created successfully!')
+        return data
+      }
+    } catch (error) {
+      console.error('Error creating compilation:', error)
     }
   }
 
@@ -640,6 +726,67 @@ export default function VideographerDashboard() {
                   </Card>
                 )}
 
+                {/* AI Processing Controls */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Sparkles className="h-5 w-5 text-purple-600" />
+                      <span>AI Intelligence Pipeline</span>
+                    </CardTitle>
+                    <CardDescription>
+                      Intelligent video analysis and smart compilation for couples
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex space-x-4">
+                        <Button 
+                          onClick={() => startIntelligentProcessing(selectedProject?.id || '')}
+                          className="bg-purple-600 hover:bg-purple-700"
+                          disabled={!selectedProject || projectFiles.length === 0}
+                        >
+                          <Zap className="h-4 w-4 mr-2" />
+                          Start AI Processing
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => setShowProcessingQueue(true)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Queue
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => setShowAnalytics(true)}
+                        >
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          Progress
+                        </Button>
+                      </div>
+                      {selectedProject && (
+                        <div className="p-4 bg-purple-50 rounded-lg">
+                          <h4 className="font-semibold text-purple-900 mb-2">Smart Compilations</h4>
+                          <div className="space-y-2">
+                            {['First Dance', 'Ceremony', 'Getting Ready', 'Reception'].map((comp) => (
+                              <div key={comp} className="flex items-center justify-between">
+                                <span className="text-sm">{comp}</span>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => createCompilation(comp.toLowerCase(), selectedProject.id)}
+                                >
+                                  <Play className="h-3 w-3 mr-1" />
+                                  Preview
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Project Summary */}
                 <Card>
                   <CardHeader>
@@ -649,7 +796,7 @@ export default function VideographerDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
                         <Video className="h-8 w-8 mx-auto mb-2 text-gray-600" />
                         <h3 className="font-medium">{selectedProject.file_count || 0}</h3>
@@ -658,12 +805,17 @@ export default function VideographerDashboard() {
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
                         <Clock className="h-8 w-8 mx-auto mb-2 text-gray-600" />
                         <h3 className="font-medium">{selectedProject.file_count - (selectedProject.processed_files || 0)}</h3>
-                        <p className="text-sm text-gray-600">Processing</p>
+                        <p className="text-sm text-gray-600">AI Processing</p>
                       </div>
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
                         <CheckCircle className="h-8 w-8 mx-auto mb-2 text-gray-600" />
                         <h3 className="font-medium">{selectedProject.processed_files || 0}</h3>
                         <p className="text-sm text-gray-600">Ready for Couple</p>
+                      </div>
+                      <div className="text-center p-4 bg-gray-50 rounded-lg">
+                        <Sparkles className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+                        <h3 className="font-medium text-purple-600">Intelligent</h3>
+                        <p className="text-sm text-gray-600">Auto compiled</p>
                       </div>
                     </div>
                   </CardContent>
