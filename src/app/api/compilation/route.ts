@@ -188,46 +188,55 @@ async function createCompilation(moments: Record<string, unknown>[], searchQuery
     qualityScore: moment.quality_score || 0.8
   }))
 
-  try {
-    // Try MediaConvert first (if configured)
-    if (process.env.MEDIACONVERT_ROLE_ARN) {
-      const compilationJob = await createCompilationJob(projectId, searchQuery, videoMoments)
-      
-      return {
-        id: compilationId,
-        name: compilationName,
-        duration: totalDuration,
-        momentCount: moments.length,
-        s3Key: compilationJob.outputS3Key,
-        streamingUrl: compilationJob.streamingUrl,
-        downloadUrl: compilationJob.downloadUrl,
-        jobId: compilationJob.id,
-        status: 'processing'
-      }
-    } else {
-      // Fallback to simple compilation
-      const outputS3Key = `compilations/${compilationId}.mp4`
-      const simpleResult = await createSimpleCompilation(videoMoments, outputS3Key)
-      
-      if (simpleResult.success) {
+    try {
+      // Try MediaConvert first (if configured)
+      if (process.env.MEDIACONVERT_ROLE_ARN) {
+        const compilationJob = await createCompilationJob(projectId, searchQuery, videoMoments)
+        
         return {
           id: compilationId,
           name: compilationName,
           duration: totalDuration,
           momentCount: moments.length,
-          s3Key: outputS3Key,
-          streamingUrl: simpleResult.streamingUrl || `https://${process.env.S3_COMPILATIONS_BUCKET || 'memory-finder-compilations'}.s3.${process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${outputS3Key}`,
-          downloadUrl: simpleResult.streamingUrl || `https://${process.env.S3_COMPILATIONS_BUCKET || 'memory-finder-compilations'}.s3.${process.env.AWS_REGION || 'us-east-2'}.amazonaws.com/${outputS3Key}`,
-          status: 'completed'
+          s3Key: compilationJob.outputS3Key,
+          streamingUrl: compilationJob.streamingUrl,
+          downloadUrl: compilationJob.downloadUrl,
+          jobId: compilationJob.id,
+          status: 'processing'
         }
       } else {
-        throw new Error(simpleResult.error || 'Simple compilation failed')
+        // Fallback to simple compilation
+        console.log(`📝 Creating simple compilation for ${videoMoments.length} clips:`)
+        videoMoments.forEach((vm, i) => {
+          console.log(` ${i + 1}. fileId=${vm.fileId} s3Key=${vm.s3Key} ${vm.description}`)
+        })
+        
+        const outputS3Key = `compilations/${compilationId}.mp4`
+        const simpleResult = await createSimpleCompilation(videoMoments, outputS3Key)
+        
+        console.log(`📾 Simple compilation result:`, simpleResult)
+        
+        if (simpleResult.success) {
+          console.log(`🎊 SUCCESS resolved compilation URL: ${simpleResult.streamingUrl}`)
+          return {
+            id: compilationId,
+            name: compilationName,
+            duration: totalDuration,
+            momentCount: moments.length,
+            s3Key: outputS3Key,
+            streamingUrl: simpleResult.streamingUrl,
+            downloadUrl: simpleResult.streamingUrl,
+            status: 'completed'
+          }
+        } else {
+          console.error(`🧨 SIMPLE COMPILATION FAILED: ${simpleResult.error}`)
+          throw new Error(simpleResult.error || 'Simple compilation failed')
+        }
       }
+    } catch (error) {
+      console.error('Compilation creation failed:', error)
+      throw error
     }
-  } catch (error) {
-    console.error('Compilation creation failed:', error)
-    throw error
-  }
 
   // Store compilation in database
   await query(

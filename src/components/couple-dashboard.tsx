@@ -225,9 +225,10 @@ export default function CoupleDashboard() {
           }])
           
           // Set the compilation URL for playback
+          console.log('Setting videoUrl:', compilationData.compilation.streamingUrl)
           setVideoUrls(prev => ({
             ...prev,
-            [compilationData.compilation.id]: compilationData.compilation.streamingUrl || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+            [compilationData.compilation.id]: compilationData.compilation.streamingUrl
           }))
           
           return
@@ -407,9 +408,8 @@ export default function CoupleDashboard() {
                           moment.isCompilation 
                             ? videoUrls[moment.video_file_id] || 
                               (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
-                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-                            : videoUrls[moment.video_file_id] || 
-                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                              ''
+                            : videoUrls[moment.video_file_id] || ''
                         }
                         startTime={moment.isCompilation ? 0 : moment.start_time_seconds}
                         endTime={moment.end_time_seconds}

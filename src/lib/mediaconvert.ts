@@ -188,11 +188,11 @@ export async function createSimpleCompilation(
     if (moments.length > 0) {
       const tryVideo = moments.find(moment => !!moment.s3Key) || moments[0]
       
+      console.log(`🔎 Found ${moments.length} moments, trying video with s3Key: ${tryVideo.s3Key}`)
+      
       if (tryVideo.s3Key) {
         try {
-          // Instead of using make-believe S3 URLs that aren't accessible,
-          // let's use the S3 presigned URL mechanism we already have:
-          
+          console.log(`🔍 Attempting to generate presigned URL for S3 object: ${rawBucket}/${tryVideo.s3Key}`)
           
           const s3Client = new S3Client({ 
             region: process.env.AWS_REGION || 'us-east-2',
@@ -208,26 +208,35 @@ export async function createSimpleCompilation(
           })
           
           const videoUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
-          console.log(`🔑 Generated presigned URL for uploaded clip: ${videoUrl}`)
+          console.log(`🔑 SUCCESS: Generated presigned URL: ${videoUrl}`)
           
           return { 
             success: true, 
             streamingUrl: videoUrl 
           }
         } catch (error) {
-          console.error(`❌ Failed to generate presigned URL: ${error.message}`)
+          console.error(`❌ FAILED to generate presigned URL - Error: ${error.message}`)
+          console.error(`Error details:`, error)
           
-          // Fallback to a public URL structure if presigned fails
-          const fallbackUrl = `https://${rawBucket}.s3.${region}.amazonaws.com/${tryVideo.s3Key}`
-          console.log(`🔄 Fallback URL: ${fallbackUrl}`)
+          // Instead of a fallback URL, let's return an error response 
+          // to force the issue to show up instead of silently falling back
+          console.log(`🔴 No presigned URL available for ${tryVideo.s3Key}, attempting direct URL: as last resort`)
+          
+          const directUrl = `https://${rawBucket}.s3.${region}.amazonaws.com/${tryVideo.s3Key}`
+          console.log(`📺 Direct S3 URL (may not be accessible): ${directUrl}`)
           
           return { 
-            success: true, 
-            streamingUrl: fallbackUrl 
+            success: false,
+            error: `Presigned URL generation failed: ${error.message}`,
+            routingSuggestion: "Check AWS credentials and try again"
           }
         }
+      } else {
+        console.log(`❌ No valid S3 key found in moments`)
       }
     }
+    
+    console.log(`📭 No moments were provided for compilation`)
     
     await new Promise(resolve => setTimeout(resolve, 1000))
     
