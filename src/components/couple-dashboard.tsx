@@ -358,28 +358,10 @@ export default function CoupleDashboard() {
             {/* Ultra-Compact Search Section */}
             {selectedProject && (
               <div className="bg-white rounded-xl shadow-lg p-2 mb-2">
-                {/* Minified Header */}
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h1 className="text-base font-semibold text-gray-800">{selectedProject.project_name}</h1>
-                    <p className="text-xs text-gray-500">{formatDate(selectedProject.wedding_date)}</p>
-                  </div>
-                  <div className="flex space-x-1">
-                    {featuredMoments.slice(0, 3).map((moment, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        className="text-xs px-2 py-1 h-6"
-                        onClick={() => {
-                          setSearchQuery(moment.query)
-                          handleSearch()
-                        }}
-                      >
-                        {moment.icon}
-                      </Button>
-                    ))}
-                  </div>
+                {/* Ultra-Compact Header */}
+                <div className="mb-2">
+                  <h1 className="text-base font-semibold text-gray-800">{selectedProject.project_name}</h1>
+                  <p className="text-xs text-gray-500">{formatDate(selectedProject.wedding_date)}</p>
                 </div>
 
                 {/* Compact Search Bar */}
@@ -402,69 +384,139 @@ export default function CoupleDashboard() {
               </div>
             )}
 
-            {/* Ultra-Compact Video Player Section */}
+            {/* Video Player with Curated Moments Sidebar */}
             {searchResults.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-2">
-                {searchResults.map((moment) => (
-                  <div key={moment.id}>
-                    {/* Mini Badge */}
-                    {moment.isCompilation && (
-                      <div className="mb-1 flex items-center space-x-2 text-xs text-purple-600">
-                        <Sparkles className="h-3 w-3" />
-                        <span>AI Compilation</span>
-                        <span className="text-gray-400">•</span>
-                        <span>{moment.momentCount || Math.max(1, Math.floor(moment.end_time_seconds / 30))} clips</span>
-                      </div>
-                    )}
-                    
-                    {/* Compact Video Player */}
-                    <VideoPlayer
-                      src={
-                        moment.isCompilation 
-                          ? videoUrls[moment.video_file_id] || 
-                            (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
-                            'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-                          : videoUrls[moment.video_file_id] || 
-                            'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-                      }
-                      startTime={moment.isCompilation ? 0 : moment.start_time_seconds}
-                      endTime={moment.end_time_seconds}
-                      fileName={moment.fileName}
-                      className="w-full"
-                    />
+              <div className="grid grid-cols-12 gap-2">
+                {/* Video Player Section */}
+                <div className="col-span-8 bg-white rounded-xl shadow-lg p-2">
+                  {searchResults.map((moment) => (
+                    <div key={moment.id}>
+                      {/* Mini Badge */}
+                      {moment.isCompilation && (
+                        <div className="mb-1 flex items-center space-x-2 text-xs text-purple-600">
+                          <Sparkles className="h-3 w-3" />
+                          <span>AI Compilation</span>
+                          <span className="text-gray-400">•</span>
+                          <span>{moment.momentCount || Math.max(1, Math.floor(moment.end_time_seconds / 30))} clips</span>
+                        </div>
+                      )}
+                      
+                      {/* Compact Video Player */}
+                      <VideoPlayer
+                        src={
+                          moment.isCompilation 
+                            ? videoUrls[moment.video_file_id] || 
+                              (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
+                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                            : videoUrls[moment.video_file_id] || 
+                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                        }
+                        startTime={moment.isCompilation ? 0 : moment.start_time_seconds}
+                        endTime={moment.end_time_seconds}
+                        fileName={moment.fileName}
+                        className="w-full"
+                      />
+                    </div>
+                  ))}
+                  
+                  {/* Mini Action Bar */}
+                  {searchResults[0]?.isCompilation && (
+                    <div className="mt-1 flex justify-end space-x-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs px-2 py-1 h-6"
+                        onClick={() => saveCompilation(searchResults[0])}
+                      >
+                        <Download className="h-3 w-3 mr-1" /> Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs px-2 py-1 h-6"
+                        onClick={() => shareMoment(searchResults[0])}
+                      >
+                        <Share className="h-3 w-3 mr-1" /> Share
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Curated Moments Sidebar */}
+                <div className="col-span-4">
+                  <div className="bg-white rounded-xl shadow-lg p-3">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                      <Sparkles className="h-5 w-5 text-pink-600 mr-2" />
+                      Picked Moments
+                    </h3>
+                    <div className="space-y-2">
+                      {featuredMoments.map((moment, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          className="w-full justify-start h-10 p-2 hover:bg-pink-50 hover:border-pink-300 text-left"
+                          onClick={() => {
+                            setSearchQuery(moment.query)
+                            handleSearch()
+                          }}
+                        >
+                          <span className="text-lg mr-2">{moment.icon}</span>
+                          <span className="font-medium">{moment.title}</span>
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                ))}
-                
-                {/* Mini Action Bar */}
-                {searchResults[0]?.isCompilation && (
-                  <div className="mt-1 flex justify-end space-x-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs px-2 py-1 h-6"
-                      onClick={() => saveCompilation(searchResults[0])}
-                    >
-                      <Download className="h-3 w-3 mr-1" /> Save
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs px-2 py-1 h-6"
-                      onClick={() => shareMoment(searchResults[0])}
-                    >
-                      <Share className="h-3 w-3 mr-1" /> Share
-                    </Button>
-                  </div>
-                )}
+                </div>
               </div>
             )}
 
-            {/* Simple Empty/Loading States - Minimal */}
-            {searchResults.length === 0 && !isSearching && searchQuery && (
-              <div className="text-center py-8">
-                <Search className="h-10 w-10 mx-auto text-gray-400 mb-3" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No moments found</h3>
-                <p className="text-gray-500">Try searching for different moments from your wedding</p>
+            {/* Default Layout with Sidebar - When No Search Results */}
+            {searchResults.length === 0 && !isSearching && (
+              <div className="grid grid-cols-12 gap-2">
+                {/* Empty State Center */}
+                <div className="col-span-8 bg-white rounded-xl shadow-lg p-8">
+                  <div className="text-center">
+                    {searchQuery ? (
+                      <>
+                        <Search className="h-10 w-10 mx-auto text-gray-400 mb-3" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No moments found</h3>
+                        <p className="text-gray-500 mb-4">Try searching for different moments from your wedding</p>
+                      </>
+                    ) : (
+                      <>
+                        <Heart className="h-12 w-12 mx-auto text-pink-400 mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Welcome! Ready to explore your memories?</h3>
+                        <p className="text-gray-500">Search for specific moments or click one of the curated choices →</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Picked Moments Sidebar - Always Available */}
+                <div className="col-span-4">
+                  <div className="bg-white rounded-xl shadow-lg p-3">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                      <Sparkles className="h-5 w-5 text-pink-600 mr-2" />
+                      Picked Moments
+                    </h3>
+                    <div className="space-y-2">
+                      {featuredMoments.map((moment, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          className="w-full justify-start h-10 p-2 hover:bg-pink-50 hover:border-pink-300 text-left"
+                          onClick={() => {
+                            setSearchQuery(moment.query)
+                            handleSearch()
+                          }}
+                        >
+                          <span className="text-lg mr-2">{moment.icon}</span>
+                          <span className="font-medium">{moment.title}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
             
