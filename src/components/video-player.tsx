@@ -106,19 +106,19 @@ export default function VideoPlayer({
 
   return (
     <Card className={`w-full ${className}`}>
-      <CardContent className="p-4">
-        <div className="space-y-3">
+      <CardContent className="p-6">
+        <div className="space-y-4">
           {fileName && (
             <h4 className="font-medium text-sm text-gray-600 truncate">
               {fileName}
             </h4>
           )}
           
-          <div className="relative bg-black rounded-lg overflow-hidden">
+          <div className="relative bg-black rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
             <video
               ref={videoRef}
               src={src}
-              className="w-full h-48 object-cover"
+              className="w-full h-auto min-h-[400px] object-cover"
               preload="metadata"
               crossOrigin="anonymous"
             />
