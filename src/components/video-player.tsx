@@ -26,6 +26,11 @@ export default function VideoPlayer({
   const [currentTime, setCurrentTime] = useState(0)
   const [segmentDuration, setSegmentDuration] = useState(0)
 
+  // Debug video source
+  useEffect(() => {
+    console.log('VideoPlayer src:', src)
+  }, [src])
+
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
@@ -117,7 +122,7 @@ export default function VideoPlayer({
           <div className="relative bg-black rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
             <video
               ref={videoRef}
-              src={src}
+              src={src || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
               className="w-full h-auto min-h-[400px] object-cover"
               preload="metadata"
               crossOrigin="anonymous"

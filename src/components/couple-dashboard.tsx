@@ -227,7 +227,7 @@ export default function CoupleDashboard() {
           // Set the compilation URL for playback
           setVideoUrls(prev => ({
             ...prev,
-            [compilationData.compilation.id]: compilationData.compilation.streamingUrl
+            [compilationData.compilation.id]: compilationData.compilation.streamingUrl || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
           }))
           
           return
@@ -242,7 +242,7 @@ export default function CoupleDashboard() {
       
       // Since compilation failed, we create a mock single compilation that combines ALL files
       const mockCompilationId = `combined-${searchQuery.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
-      const demoVideoUrl = 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'
+      const demoVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
       
       setSearchResults([{
         id: mockCompilationId,
@@ -551,7 +551,11 @@ export default function CoupleDashboard() {
                             </p>
                           </div>
                           <VideoPlayer
-                            src={videoUrls[moment.video_file_id] || (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4'}
+                            src={
+                              videoUrls[moment.video_file_id] || 
+                              (moment as VideoMoment & { compilationUrl?: string }).compilationUrl || 
+                              'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+                            }
                             startTime={0}
                             endTime={moment.end_time_seconds}
                             fileName={moment.fileName}
@@ -560,7 +564,7 @@ export default function CoupleDashboard() {
                         </>
                       ) : (
                         <VideoPlayer
-                          src={videoUrls[moment.video_file_id] || ''}
+                          src={videoUrls[moment.video_file_id] || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
                           startTime={moment.start_time_seconds}
                           endTime={moment.end_time_seconds}
                           fileName={moment.fileName}
