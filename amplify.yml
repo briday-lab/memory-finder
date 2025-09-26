@@ -8,7 +8,7 @@ frontend:
         - echo "✅ Dependencies installed successfully"
     build:
       commands:
-        - echo "🔨 Building Next.js application..."
+        - echo "🔨 Building Next.js application with simplification..."
         - npm run build
         - echo "✅ Build completed successfully"
   artifacts:
