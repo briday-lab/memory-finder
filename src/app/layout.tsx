@@ -1,12 +1,11 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Memory Finder - Wedding Video Search',
-  description: 'Find your perfect wedding moments with AI-powered video search',
+  title: 'Memory Finder',
+  description: 'Wedding Video Search',
 }
 
 export default function RootLayout({
