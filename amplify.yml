@@ -4,9 +4,11 @@ frontend:
     preBuild:
       commands:
         - npm ci
+        - echo "Starting build process..."
     build:
       commands:
         - npm run build
+        - echo "Build completed successfully"
   artifacts:
     baseDirectory: .next
     files:
