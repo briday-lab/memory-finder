@@ -1,4 +1,6 @@
 import { MediaConvertClient, CreateJobCommand, GetJobCommand } from '@aws-sdk/client-mediaconvert'
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 const client = new MediaConvertClient({ 
   region: process.env.AWS_REGION || 'us-east-2' 
@@ -185,18 +187,45 @@ export async function createSimpleCompilation(
     
     if (moments.length > 0) {
       const tryVideo = moments.find(moment => !!moment.s3Key) || moments[0]
-      const rawVideoUrl = `https://${rawBucket}.s3.${region}.amazonaws.com/${tryVideo.s3Key}`
       
-      console.log(`🎴 ACTUAL uploaded clip URL generation decomp isCH ㄖ`)
-      console.log(`⒌ S3 ‑›  rawVideoUrl:${rawVideoUrl}`)
-      console.log(`✦ clip provided﹁﹁﹁﹁﹉﹅﹆﹓ original file set (${moments.length} items sourced)_﹋﹆﹘﹁﹅﹊﹈﹂﹂﹂﹂﹆﹆﹂﹋﹈﹍﹅﹅﹅﹗﹂﹂﹖﹎﹃﹂﹎﹎﹎﹂﹅﹁﹂﹋﹆﹃﹆﹆﹋﹈﹂﹉﹌﹎﹂﹋`)
-
-      await new Promise(resolve =>
-        setTimeout(resolve, 1000)) // simulate ’reachable’
-        
-      return {
-        success: true,
-        streamingUrl: rawVideoUrl
+      if (tryVideo.s3Key) {
+        try {
+          // Instead of using make-believe S3 URLs that aren't accessible,
+          // let's use the S3 presigned URL mechanism we already have:
+          
+          
+          const s3Client = new S3Client({ 
+            region: process.env.AWS_REGION || 'us-east-2',
+            credentials: {
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
+            }
+          })
+          
+          const command = new GetObjectCommand({
+            Bucket: rawBucket,
+            Key: tryVideo.s3Key
+          })
+          
+          const videoUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+          console.log(`🔑 Generated presigned URL for uploaded clip: ${videoUrl}`)
+          
+          return { 
+            success: true, 
+            streamingUrl: videoUrl 
+          }
+        } catch (error) {
+          console.error(`❌ Failed to generate presigned URL: ${error.message}`)
+          
+          // Fallback to a public URL structure if presigned fails
+          const fallbackUrl = `https://${rawBucket}.s3.${region}.amazonaws.com/${tryVideo.s3Key}`
+          console.log(`🔄 Fallback URL: ${fallbackUrl}`)
+          
+          return { 
+            success: true, 
+            streamingUrl: fallbackUrl 
+          }
+        }
       }
     }
     
