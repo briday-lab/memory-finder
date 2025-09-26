@@ -133,11 +133,11 @@ export async function POST(request: NextRequest) {
 
 async function selectBestMoments(moments: Record<string, unknown>[], maxDuration: number) {
   // Sort by quality score and relevance
-  const sortedMoments = moments.sort((a, b) => {
-    const scoreA = (a.confidence || 0.5) * (a.quality_score || 0.5)
-    const scoreB = (b.confidence || 0.5) * (b.quality_score || 0.5)
-    return scoreB - scoreA
-  })
+    const sortedMoments = moments.sort((a, b) => {
+      const scoreA = (Number(a.confidence) || 0.5) * (Number(a.quality_score) || 0.5)
+      const scoreB = (Number(b.confidence) || 0.5) * (Number(b.quality_score) || 0.5)
+      return scoreB - scoreA
+    })
 
   const selectedMoments = []
   let totalDuration = 0
