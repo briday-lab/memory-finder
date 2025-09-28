@@ -12,7 +12,7 @@ export const cognitoConfig = {
 
 // Cognito Hosted UI Configuration
 export const cognitoHostedUI = {
-  domain: `https://memory-finder-users.auth.us-east-2.amazoncognito.com`,
+  domain: `https://d1lcia0inyjsq.cloudfront.net`,
   clientId: cognitoConfig.userPoolWebClientId,
   redirectUri: cognitoConfig.redirectSignIn,
   responseType: 'code',
