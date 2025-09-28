@@ -35,46 +35,135 @@ export default function LandingPage() {
   }
 
   return (
-    <div>
+    <div style={{
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
+      lineHeight: 1.6,
+      color: '#1f2937',
+      background: 'linear-gradient(135deg, #fdf2f8 0%, #ffffff 50%, #f3e8ff 100%)',
+      minHeight: '100vh'
+    }}>
       {/* Header */}
-      <header className="header">
-        <div className="logo-container">
-          <Heart className="logo-icon" />
-          <h1 className="logo-text">Memory Finder</h1>
+      <header style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '1.5rem 1rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <Heart style={{
+            width: '2rem',
+            height: '2rem',
+            color: '#db2777'
+          }} />
+          <h1 style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            color: '#111827'
+          }}>Memory Finder</h1>
         </div>
-        <a href="#features" className="learn-more-btn">
+        <a href="#features" style={{
+          display: 'none',
+          padding: '0.5rem 1rem',
+          border: '1px solid #d1d5db',
+          background: 'white',
+          borderRadius: '0.375rem',
+          fontSize: '0.875rem',
+          fontWeight: 500,
+          color: '#374151',
+          textDecoration: 'none',
+          transition: 'all 0.2s'
+        }}>
           Learn More
         </a>
       </header>
 
       {/* Hero Section */}
-      <section className="hero">
+      <section style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '4rem 1rem',
+        textAlign: 'center'
+      }}>
         <div>
-          <h2 className="hero-title">
+          <h2 style={{
+            fontSize: '3rem',
+            fontWeight: 700,
+            color: '#111827',
+            marginBottom: '1.5rem',
+            lineHeight: 1.1
+          }}>
             Find Your Perfect{' '}
-            <span className="hero-highlight">Wedding Moments</span>
+            <span style={{ color: '#db2777' }}>Wedding Moments</span>
           </h2>
-          <p className="hero-description">
+          <p style={{
+            fontSize: '1.25rem',
+            color: '#6b7280',
+            marginBottom: '2rem',
+            maxWidth: '32rem',
+            marginLeft: 'auto',
+            marginRight: 'auto'
+          }}>
             Upload your wedding videos and find any moment instantly with AI-powered search. 
             From vows to first dance, discover every precious memory.
           </p>
           
           {/* Features */}
-          <div className="features-grid">
-            <div className="feature-card">
-              <Video className="feature-icon" />
-              <h3 className="feature-title">Upload Videos</h3>
-              <p className="feature-description">Videographers upload wedding footage securely</p>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            gap: '2rem',
+            marginBottom: '3rem'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <Video style={{
+                width: '3rem',
+                height: '3rem',
+                color: '#db2777',
+                margin: '0 auto 1rem'
+              }} />
+              <h3 style={{
+                fontSize: '1.125rem',
+                fontWeight: 600,
+                marginBottom: '0.5rem',
+                color: '#111827'
+              }}>Upload Videos</h3>
+              <p style={{ color: '#6b7280' }}>Videographers upload wedding footage securely</p>
             </div>
-            <div className="feature-card">
-              <Search className="feature-icon" />
-              <h3 className="feature-title">AI Search</h3>
-              <p className="feature-description">Search in plain English for any moment</p>
+            <div style={{ textAlign: 'center' }}>
+              <Search style={{
+                width: '3rem',
+                height: '3rem',
+                color: '#db2777',
+                margin: '0 auto 1rem'
+              }} />
+              <h3 style={{
+                fontSize: '1.125rem',
+                fontWeight: 600,
+                marginBottom: '0.5rem',
+                color: '#111827'
+              }}>AI Search</h3>
+              <p style={{ color: '#6b7280' }}>Search in plain English for any moment</p>
             </div>
-            <div className="feature-card">
-              <Sparkles className="feature-icon" />
-              <h3 className="feature-title">Instant Clips</h3>
-              <p className="feature-description">Get perfectly edited video clips instantly</p>
+            <div style={{ textAlign: 'center' }}>
+              <Sparkles style={{
+                width: '3rem',
+                height: '3rem',
+                color: '#db2777',
+                margin: '0 auto 1rem'
+              }} />
+              <h3 style={{
+                fontSize: '1.125rem',
+                fontWeight: 600,
+                marginBottom: '0.5rem',
+                color: '#111827'
+              }}>Instant Clips</h3>
+              <p style={{ color: '#6b7280' }}>Get perfectly edited video clips instantly</p>
             </div>
           </div>
         </div>
