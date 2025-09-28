@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Heart, Mail, Lock, Eye, EyeOff, User, Shield } from 'lucide-react'
 import { cognitoAuth, SignUpData, SignInData } from '@/lib/cognito-auth'
@@ -19,14 +19,50 @@ export default function LandingPage() {
     userType: 'couple' as 'videographer' | 'couple'
   })
 
+  // Handle OAuth callback on component mount
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const code = urlParams.get('code')
+      const state = urlParams.get('state')
+
+      if (code && state === 'memory-finder-auth') {
+        setIsLoading(true)
+        setError('')
+        
+        try {
+          const result = await cognitoAuth.handleOAuthCallback()
+          
+          if (result.success && result.user) {
+            setSuccess('Welcome! Redirecting to dashboard...')
+            setTimeout(() => {
+              router.push('/dashboard')
+            }, 1500)
+          } else {
+            setError(result.error || 'Authentication failed')
+          }
+        } catch (error) {
+          setError('Failed to complete authentication')
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    handleOAuthCallback()
+  }, [router])
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     setError('')
     
-    // TODO: Implement Google OAuth with Cognito
-    // For now, show professional message
-    setError('Google Sign-In integration coming soon. Please use email authentication.')
-    setIsLoading(false)
+    try {
+      await cognitoAuth.signInWithGoogle()
+      // User will be redirected to Google Sign-In
+    } catch (error) {
+      setError('Failed to initiate Google Sign-In. Please try again.')
+      setIsLoading(false)
+    }
   }
 
   const handleEmailAuth = async (e: React.FormEvent<HTMLFormElement>) => {

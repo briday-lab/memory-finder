@@ -1,4 +1,4 @@
-import { cognitoConfig, cognitoEndpoints, createCognitoHeaders, authParams } from './cognito-config'
+import { cognitoConfig, cognitoEndpoints, createCognitoHeaders, authParams, cognitoHostedUI } from './cognito-config'
 
 export interface CognitoUser {
   id: string
@@ -137,6 +137,91 @@ class CognitoAuthService {
       window.location.href = '/'
     } catch (error) {
       console.error('Sign out error:', error)
+    }
+  }
+
+  async signInWithGoogle(): Promise<void> {
+    try {
+      // Construct Google Sign-In URL for Cognito Hosted UI
+      const googleSignInUrl = `${cognitoHostedUI.domain}/oauth2/authorize?` +
+        `client_id=${cognitoHostedUI.clientId}&` +
+        `response_type=${cognitoHostedUI.responseType}&` +
+        `scope=${cognitoHostedUI.scope}&` +
+        `redirect_uri=${encodeURIComponent(cognitoHostedUI.redirectUri)}&` +
+        `state=${cognitoHostedUI.state}`
+
+      // Redirect to Google Sign-In
+      window.location.href = googleSignInUrl
+    } catch (error) {
+      console.error('Google Sign-In error:', error)
+      throw new Error('Failed to initiate Google Sign-In')
+    }
+  }
+
+  async handleOAuthCallback(): Promise<AuthResponse> {
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const code = urlParams.get('code')
+      const state = urlParams.get('state')
+
+      if (!code || state !== cognitoHostedUI.state) {
+        return {
+          success: false,
+          error: 'Invalid OAuth callback'
+        }
+      }
+
+      // Exchange authorization code for tokens
+      const tokenResponse = await fetch(`${cognitoHostedUI.domain}/oauth2/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          client_id: cognitoHostedUI.clientId,
+          code: code,
+          redirect_uri: cognitoHostedUI.redirectUri,
+        }),
+      })
+
+      const tokens = await tokenResponse.json()
+
+      if (tokenResponse.ok && tokens.access_token) {
+        const user: CognitoUser = {
+          id: tokens.id_token ? JSON.parse(atob(tokens.id_token.split('.')[1])).sub : '',
+          email: tokens.id_token ? JSON.parse(atob(tokens.id_token.split('.')[1])).email : '',
+          name: tokens.id_token ? JSON.parse(atob(tokens.id_token.split('.')[1])).name : '',
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          idToken: tokens.id_token,
+          emailVerified: true,
+        }
+
+        // Store tokens
+        localStorage.setItem('cognito_access_token', user.accessToken)
+        localStorage.setItem('cognito_refresh_token', user.refreshToken)
+        localStorage.setItem('cognito_id_token', user.idToken)
+
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname)
+
+        return {
+          success: true,
+          user,
+        }
+      } else {
+        return {
+          success: false,
+          error: tokens.error_description || 'Failed to exchange authorization code'
+        }
+      }
+    } catch (error) {
+      console.error('OAuth callback error:', error)
+      return {
+        success: false,
+        error: 'Failed to process OAuth callback'
+      }
     }
   }
 

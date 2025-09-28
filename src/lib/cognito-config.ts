@@ -10,6 +10,16 @@ export const cognitoConfig = {
   responseType: 'code' as const,
 }
 
+// Cognito Hosted UI Configuration
+export const cognitoHostedUI = {
+  domain: `https://memory-finder-users.auth.us-east-2.amazoncognito.com`,
+  clientId: cognitoConfig.userPoolWebClientId,
+  redirectUri: cognitoConfig.redirectSignIn,
+  responseType: 'code',
+  scope: 'openid email profile',
+  state: 'memory-finder-auth'
+}
+
 // Cognito API endpoints
 export const cognitoEndpoints = {
   signUp: `https://cognito-idp.${cognitoConfig.region}.amazonaws.com/`,
