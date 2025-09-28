@@ -14,6 +14,7 @@ export interface VideoMoment {
   endTime: number
   description: string
   qualityScore: number
+  fileName?: string
 }
 
 export interface CompilationJob {
@@ -195,7 +196,7 @@ export async function createSimpleCompilation(
         
         for (let i = 0; i < selectedMoments.length; i++) {
           const moment = selectedMoments[i]
-          console.log(`📂 Clip ${i + 1}: ${moment.filename || moment.id} -> S3: ${moment.s3Key}`)
+          console.log(`📂 Clip ${i + 1}: ${moment.fileName || moment.id} -> S3: ${moment.s3Key}`)
         }
         
         const bucketName = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
@@ -221,7 +222,7 @@ export async function createSimpleCompilation(
               clipUrls.push(presignedUrl)
               console.log(`🔗 Generated presigned URL for ${moment.s3Key}`)
             } catch (error) {
-              console.error(`❌ Failed to generate presigned URL for ${moment.s3Key}:`, error.message)
+              console.error(`❌ Failed to generate presigned URL for ${moment.s3Key}:`, error instanceof Error ? error.message : String(error))
             }
           }
         }
@@ -232,14 +233,9 @@ export async function createSimpleCompilation(
           console.log(`🎥 SUCCESS: Using first uploaded clip: ${primaryClipUrl.substring(0, 80)}...`)
           console.log(`📊 Total clips found: ${clipUrls.length}/${selectedMoments.length}`)
           
-          return { 
-            success: true, 
-            streamingUrl: primaryClipUrl,
-            compilationDetails: {
-              clipsCount: clipUrls.length,
-              totalMoments: selectedMoments.length,
-              processingStage: 'first_clip_assembled'
-            }
+          return {
+            success: true,
+            streamingUrl: primaryClipUrl
           }
         } else {
           throw new Error('No valid presigned URLs could be generated for uploaded clips')

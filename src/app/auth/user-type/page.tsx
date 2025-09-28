@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Heart, Camera, Users } from 'lucide-react'
 
 export default function UserTypePage() {
-  const { data: session } = useSession()
+  const sessionResult = useSession()
+  const { data: session } = sessionResult || {}
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 

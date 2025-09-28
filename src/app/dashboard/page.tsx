@@ -7,7 +7,8 @@ import VideographerDashboard from '@/components/videographer-dashboard'
 import CoupleDashboard from '@/components/couple-dashboard'
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
+  const sessionResult = useSession()
+  const { data: session, status } = sessionResult || {}
   const router = useRouter()
   
   // For Google OAuth users, check localStorage for user type selection

@@ -49,11 +49,13 @@ interface VideoMoment {
   tags?: string[]
   emotion?: string
   scene_type?: string
+  momentCount?: number
 }
 
 export default function CoupleDashboard() {
   console.log('CoupleDashboard component loaded')
-  const { data: session } = useSession()
+  const sessionResult = useSession()
+  const { data: session } = sessionResult || {}
   const [projects, setProjects] = useState<WeddingProject[]>([])
   const [selectedProject, setSelectedProject] = useState<WeddingProject | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -261,7 +263,7 @@ export default function CoupleDashboard() {
         fileName: `Compilation: ${searchQuery}`,
         fileSize: 0,
         lastModified: new Date(),
-        s3_key: null,
+        s3_key: undefined,
         compilationUrl: demoVideoUrl, // Ensure video plays by providing real demo content
         isCompilation: true,
         duration: 300

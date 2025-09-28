@@ -143,7 +143,7 @@ async function selectBestMoments(moments: Record<string, unknown>[], maxDuration
   let totalDuration = 0
 
   for (const moment of sortedMoments) {
-    const momentDuration = moment.end_time - moment.start_time
+    const momentDuration = Number(moment.end_time) - Number(moment.start_time)
     
     // Skip if adding this moment would exceed max duration
     if (totalDuration + momentDuration > maxDuration) {
@@ -151,7 +151,7 @@ async function selectBestMoments(moments: Record<string, unknown>[], maxDuration
     }
 
     // Skip moments with poor quality
-    if ((moment.quality_score || 0) < 0.3) {
+    if ((Number(moment.quality_score) || 0) < 0.3) {
       continue
     }
 
@@ -165,7 +165,7 @@ async function selectBestMoments(moments: Record<string, unknown>[], maxDuration
   }
 
   // Sort selected moments chronologically
-  return selectedMoments.sort((a, b) => a.start_time - b.start_time)
+  return selectedMoments.sort((a, b) => Number(a.start_time) - Number(b.start_time))
 }
 
 async function createCompilation(moments: Record<string, unknown>[], searchQuery: string, projectId: string) {
@@ -174,18 +174,18 @@ async function createCompilation(moments: Record<string, unknown>[], searchQuery
   
   // Calculate total duration
   const totalDuration = moments.reduce((sum, moment) => {
-    return sum + (moment.end_time - moment.start_time)
+    return sum + (Number(moment.end_time) - Number(moment.start_time))
   }, 0)
 
   // Convert moments to MediaConvert format
   const videoMoments = moments.map(moment => ({
-    id: moment.id,
-    fileId: moment.file_id,
-    s3Key: moment.s3_key || moment.proxy_s3_key,
-    startTime: moment.start_time,
-    endTime: moment.end_time,
-    description: moment.description,
-    qualityScore: moment.quality_score || 0.8
+    id: String(moment.id),
+    fileId: String(moment.file_id),
+    s3Key: String(moment.s3_key || moment.proxy_s3_key),
+    startTime: Number(moment.start_time),
+    endTime: Number(moment.end_time),
+    description: String(moment.description),
+    qualityScore: Number(moment.quality_score) || 0.8
   }))
 
     try {
@@ -249,7 +249,7 @@ async function createCompilation(moments: Record<string, unknown>[], searchQuery
       projectId,
       searchQuery,
       compilationName,
-      compilation.s3Key,
+      `compilations/${compilationId}.mp4`,
       totalDuration,
       moments.length,
       0.9 // High quality score
@@ -266,16 +266,23 @@ async function createCompilation(moments: Record<string, unknown>[], searchQuery
       [
         crypto.randomUUID(),
         compilationId,
-        moment.id,
-        moment.start_time,
-        moment.end_time,
+        String(moment.id),
+        Number(moment.start_time),
+        Number(moment.end_time),
         'smooth_cut',
-        moment.quality_score || 0.8
+        Number(moment.quality_score) || 0.8
       ]
     )
   }
 
-  return compilation
+  return {
+    id: compilationId,
+    name: compilationName,
+    s3Key: `compilations/${compilationId}.mp4`,
+    duration: totalDuration,
+    momentCount: moments.length,
+    qualityScore: 0.9
+  }
 }
 
 export async function GET(request: NextRequest) {

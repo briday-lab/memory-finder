@@ -27,10 +27,17 @@ interface InvitationData {
   }
 }
 
-export default function InvitationPage({ params }: { params: { token: string } }) {
-  const { token } = params
+export default function InvitationPage({ params }: { params: Promise<{ token: string }> }) {
+  const [token, setToken] = useState<string>('')
+  
+  useEffect(() => {
+    params.then(({ token: tokenParam }) => {
+      setToken(tokenParam)
+    })
+  }, [params])
   const router = useRouter()
-  const { data: session } = useSession()
+  const sessionResult = useSession()
+  const { data: session } = sessionResult || {}
   const [invitationData, setInvitationData] = useState<InvitationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
