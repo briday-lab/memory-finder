@@ -107,7 +107,7 @@ PROJECTS_TABLE=${PROJECTS_TABLE}
 LAMBDA_ROLE_ARN=${LAMBDA_ROLE}
 
 # App URLs
-NEXTAUTH_URL=https://memory-finder-${ENVIRONMENT}.vercel.app
+NEXTAUTH_URL=https://memory-finder-${ENVIRONMENT}.amplifyapp.com
 EOF
     
     echo "✅ Environment configured: $ENV_FILE"
@@ -120,3 +120,4 @@ else
     echo "❌ Deployment failed!"
     exit 1
 fi
+

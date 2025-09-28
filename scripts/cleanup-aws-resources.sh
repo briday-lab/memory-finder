@@ -173,3 +173,4 @@ aws lambda list-functions --query 'Functions[?starts_with(FunctionName, `memory-
 echo ""
 echo "🎉 AWS cleanup completed successfully!"
 echo "Ready for fresh CloudFormation deployment!"
+

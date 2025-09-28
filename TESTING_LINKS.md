@@ -12,13 +12,13 @@
 ## 🏢 **Production Links (After Deployment):**
 
 ### **Videographer Dashboard:**
-1. **Login as Videographer**: https://memory-finder.vercel.app/auth/signin
-2. **Videographer Dashboard**: https://memory-finder.vercel.app/videographer/dashboard
+1. **Login as Videographer**: [Your deployed domain]/auth/signin
+2. **Videographer Dashboard**: [Your deployed domain]/videographer/dashboard
 
 ### **Couple Dashboard - TESTING:**
-1. **Login as Couple**: https://memory-finder.vercel.app/auth/signin  
-2. **Couple Access**: https://memory-finder.vercel.app/couple/dashboard
-3. **Shared Project Link**: https://memory-finder.vercel.app/invitation/[PROJECT_ID]
+1. **Login as Couple**: [Your deployed domain]/auth/signin  
+2. **Couple Access**: [Your deployed domain]/couple/dashboard
+3. **Shared Project Link**: [Your deployed domain]/invitation/[PROJECT_ID]
 
 ---
 
@@ -41,7 +41,7 @@
 ---
 
 ## 🏃 **DEV Environment Access:**
-- **DEV Deployment**: https://memory-finder-dev-*xxx*.vercel.app/[ENDPOINT]
+- **DEV Deployment**: [Your deployed domain]/[ENDPOINT]
 - **STS Automation**: Available after DEV pushes
 
 ---
@@ -73,3 +73,4 @@
 - Ready for end-to-end testing
 
 **Now ready for complete testing workflow! 🎬**
+

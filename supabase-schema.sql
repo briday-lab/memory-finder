@@ -207,3 +207,4 @@ CREATE POLICY "Project members can view their search queries" ON search_queries
       AND (videographer_id = auth.uid() OR couple_id = auth.uid())
     )
   );
+

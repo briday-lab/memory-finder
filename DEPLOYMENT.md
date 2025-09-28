@@ -6,11 +6,11 @@ Your Memory Finder app is now completely AWS-powered and ready for production de
 
 ## 🎯 Quick Deploy Options
 
-### 1. **Vercel (Recommended - Easiest)**
-- Go to [vercel.com](https://vercel.com)
-- Sign up with GitHub
-- Click "New Project" → Import your repo
-- Deploy automatically!
+### 1. **AWS Amplify (Recommended - AWS Native)**
+- Go to AWS Amplify Console
+- Connect your GitHub repository
+- Configure build settings for Next.js
+- Deploy automatically with AWS integration!
 
 ### 2. **Netlify**
 - Go to [netlify.com](https://netlify.com)
@@ -41,7 +41,7 @@ Your Memory Finder app is now completely AWS-powered and ready for production de
 
 ## 🌐 **Live URLs**
 Once deployed, your app will be available at:
-- `https://your-app-name.vercel.app` (Vercel)
+- `https://your-app-name.amplifyapp.com` (AWS Amplify)
 - `https://your-app-name.netlify.app` (Netlify)
 - `https://your-app-name.railway.app` (Railway)
 
@@ -55,3 +55,4 @@ Once deployed, your app will be available at:
 - **Search**: `https://4whhkqo1oi.execute-api.us-east-2.amazonaws.com/prod/search`
 
 Your app is production-ready! 🎉
+

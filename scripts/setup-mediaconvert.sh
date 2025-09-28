@@ -150,3 +150,4 @@ echo "2. Deploy the updated application"
 echo "3. Test video compilation functionality"
 echo ""
 echo "MediaConvert is now ready to process video compilations! 🎬"
+

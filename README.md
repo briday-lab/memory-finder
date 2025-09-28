@@ -194,10 +194,10 @@ The application uses the following main tables:
 
 ## Deployment
 
-### Vercel (Recommended)
+### AWS Amplify (Recommended)
 
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
+1. Connect your GitHub repository to AWS Amplify
+2. Set environment variables in Amplify console
 3. Deploy automatically on push to main branch
 
 ### Other Platforms
@@ -206,7 +206,7 @@ The app can be deployed to any platform that supports Next.js:
 - Netlify
 - Railway
 - DigitalOcean App Platform
-- AWS Amplify
+- Render
 
 ## Contributing
 

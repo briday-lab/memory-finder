@@ -273,3 +273,4 @@ async function migrateSchema() {
 
 // Run the migration
 migrateSchema().catch(console.error);
+

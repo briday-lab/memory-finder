@@ -110,3 +110,4 @@ SELECT
 FROM users u1, users u2 
 WHERE u1.user_type = 'videographer' AND u2.user_type = 'couple'
 LIMIT 1;
+

@@ -80,7 +80,7 @@ Email: julia.tom@memoryfinder.test
 Password: MemoryFinder2024!
 
 # SHARED PROJECT LINK (after creating via videographer)
-https://memory-finder.vercel.app/invitation/[PROJECT_ID]
+https://[your-domain]/invitation/[PROJECT_ID]
 ```
 
 ---
@@ -118,8 +118,9 @@ https://memory-finder.vercel.app/invitation/[PROJECT_ID]
 
 ## 🚨 **Important Notes:**
 - Use real/non-existing emails (can ease testing of email errors)
-- Vercel auth will generate magic link authentication  
+- AWS Amplify auth will generate magic link authentication  
 - Project data persists so reload and logout works properly
 - Feel free to use these test role-appropriate credentials for your workflow
 
 **Ready for immediate testing!** 🎬
+

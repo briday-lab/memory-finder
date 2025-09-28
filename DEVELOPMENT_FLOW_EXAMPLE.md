@@ -79,7 +79,7 @@ git push origin dev              # 🚀 Auto-deploys to DEV AWS cloud
    - ✅ **Type-check:** Makes sense
    - ✅ **Tests:** Previous bug fixes still work
    - ✅ **Deploy:** Pipelines deploy Memory Finder DEV now live
-3. **Test URL becomes**: `https://memory-finder-dev-*.vercel.app`
+3. **Test URL becomes**: `https://memory-finder-dev-*.amplifyapp.com`
      —that is the DEV cloud URL; customers can’t reach it.
 
 ---
@@ -87,7 +87,7 @@ git push origin dev              # 🚀 Auto-deploys to DEV AWS cloud
 ### **🔧 11:15 AM - Check Cloud DEV Environment**
 ```bash
 # Visit the cloud URL to confirm DEV
-https://memory-finder-dev-*.vercel.app → Upload a file  
+https://memory-finder-dev-*.amplifyapp.com → Upload a file  
 Watch your new progress bar running on AWS cloud!
 ```
 
@@ -147,9 +147,9 @@ git push main                   # Post to trigger PRODUCTION pipeline!
 
 | ENVIRONMENT |     WHO MAINLY USES    | WHAT ENV IS USED                                  |
 |-------------|------------------------|---------------------------------------------------|
-| **DEV**      | You (Developer)        | CI → https://memory-finder-*dev.vercel.app        |
-| **STAGING**| QA / Testing team     | push dev  → https://memory-finder-staging.aws/ ​​  |
-| **PROD**    | Live customer website | push main → https://memory-finder.vercel.app     ​​|
+| **DEV**      | You (Developer)        | CI → https://memory-finder-*dev.amplifyapp.com        |
+| **STAGING**| QA / Testing team     | push dev  → https://memory-finder-staging.amplifyapp.com ​​  |
+| **PROD**    | Live customer website | push main → https://memory-finder.amplifyapp.com     ​​|
 
 ---
 
@@ -158,10 +158,10 @@ git push main                   # Post to trigger PRODUCTION pipeline!
 |TIME|    	      JOB    	        |        MANUSCRIPT                                                  |
 |----|---------------------------|-------------------------------------------------------------------------|
 | Day 1  |	Feature on dev   	      | “Perhaps we’ll try a new upload better”                                |
-| |  git push dev              | CloudFormation refreshes *DEV* infra into Vercel dev builds. 	        |
-| Day 2  |	Deploy → STAGING 	    | “Seems ready to let QA look.” 	    git push staging                   | Code validates and deploys STAGING AWS stack. 	         	  (wait 5 min) 	 (STAGING confirms.) 	  git merge dev  	 🤵‍♂️ 	    Quick assignment(**with Vercel  	    	    Deployment: 	  	    Staging builds*) 	 (before the Push of main 	 Production pipeline will first require a manual “app”.). Then anyway 	 … it turns  **automated** (push version up HTTP with a small GitHub integration step). 	 
+| |  git push dev              | CloudFormation refreshes *DEV* infra into AWS Amplify dev builds. 	        |
+| Day 2  |	Deploy → STAGING 	    | “Seems ready to let QA look.” 	    git push staging                   | Code validates and deploys STAGING AWS stack. 	         	  (wait 5 min) 	 (STAGING confirms.) 	  git merge dev  	 🤵‍♂️ 	    Quick assignment(**with AWS Amplify  	    	    Deployment: 	  	    Staging builds*) 	 (before the Push of main 	 Production pipeline will first require a manual “app”.). Then anyway 	 … it turns  **automated** (push version up HTTP with a small GitHub integration step). 	 
 
-|  ` Day 3  |	Production readiness 	    | “Let’s ship it!” 	    	  git push main 	                                | 	 Deployment writes the DEV code    	    Already validated STAGING ✓ 	 (ci pipeline runs 	 a Built-in final smoke tests and deploys with **CF ** my ** prod stack(prod)**.                                                                    	 …… – ‼️ just four clicks and kaboom… your code’s live. 	 —> 	 https://memory-finder.vercel.app
+|  ` Day 3  |	Production readiness 	    | “Let’s ship it!” 	    	  git push main 	                                | 	 Deployment writes the DEV code    	    Already validated STAGING ✓ 	 (ci pipeline runs 	 a Built-in final smoke tests and deploys with **CF ** my ** prod stack(prod)**.                                                                    	 …… – ‼️ just four clicks and kaboom… your code’s live. 	 —> 	 https://memory-finder.amplifyapp.com
 
 ---
 ## 🌍 **Memory Finder life diagram**
@@ -228,3 +228,4 @@ BEST ENERGY POLICY for a beginner  ^^^ STAY LOCKED ON DEV!!!
 
 —
 — Humans tend to learn … …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …… …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. …. .....
+

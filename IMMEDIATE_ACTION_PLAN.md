@@ -25,7 +25,7 @@ npm run dev:dev                     # Local development: http://localhost:3000
 
 # Terminal 2: Git Management
 git status                          # Check current state
-git push origin dev                 # Deploy to DEV cloud → https://memory-finder-dev-*.vercel.app
+git push origin dev                 # Deploy to DEV cloud → [your-dev-domain]
 ```
 
 ### **2. DEVELOPMENT CYCLE WORKFLOW** 
@@ -153,3 +153,4 @@ We have a solid DevOps foundation, separated environments, and clear workflow.
 
 ---
 **Ready to build tomorrow's wedding technology today.** ✨🎬
+

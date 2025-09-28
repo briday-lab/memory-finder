@@ -161,3 +161,4 @@ jobs:
           # Download old files only
           aws s3 sync s3://memory-finder-dev-raw-${{ github.run_id }} s3://memory-finder-dev-raw-${{ github.run_id }}
           # Keep only last 10 versions
+

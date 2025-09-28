@@ -330,3 +330,4 @@ CREATE TABLE compilation_moments (
 ---
 
 **This transforms Memory Finder from returning individual clips to delivering intelligent, edited compilations that tell the complete story of each moment across multiple video sources.**
+

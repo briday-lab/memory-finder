@@ -42,3 +42,4 @@ export const deleteFromB2 = async (key: string) => {
 
   return s3.deleteObject(params).promise()
 }
+

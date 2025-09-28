@@ -80,3 +80,4 @@ async function addProjectInvitationsTable() {
 
 // Run the setup
 addProjectInvitationsTable().catch(console.error);
+

@@ -34,3 +34,4 @@ echo "   Environment variables already set!"
 echo "3. When done, app URL: https://${APP_ID}.amplifyapp.com"
 
 exit 0
+

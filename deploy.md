@@ -2,8 +2,8 @@
 
 ## Quick Deploy Options
 
-### Option 1: Vercel (Recommended)
-1. Go to [vercel.com](https://vercel.com)
+### Option 1: AWS Amplify (Recommended)
+1. Go to AWS Amplify Console
 2. Sign up/login with GitHub
 3. Click "New Project"
 4. Import your GitHub repository
@@ -35,3 +35,4 @@
 - Step Functions for workflow orchestration
 
 The app is ready to deploy and will work with the AWS backend services!
+

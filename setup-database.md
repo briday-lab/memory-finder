@@ -45,3 +45,4 @@ After the database is set up, we'll configure:
 3. Test the complete workflow
 
 Let me know when you've completed the database setup!
+

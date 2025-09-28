@@ -98,3 +98,4 @@ async function fixSearchFunction() {
 
 // Run the fix
 fixSearchFunction().catch(console.error);
+

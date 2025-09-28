@@ -177,3 +177,4 @@ export const handler = async (event) => {
     client.release();
   }
 };
+

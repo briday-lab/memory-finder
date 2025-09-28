@@ -139,3 +139,4 @@ Language   Vector     Matching    Results   Segments   to Watch
 ---
 
 **This workflow transforms raw wedding footage into an intelligent, searchable memory bank that couples can explore naturally and intuitively.**
+

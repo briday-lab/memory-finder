@@ -177,3 +177,4 @@ If you specifically want PostgreSQL:
    - Enterprise-grade security
 
 **Recommendation: Proceed with DynamoDB - it's better than RDS for Memory Finder's use case!**
+

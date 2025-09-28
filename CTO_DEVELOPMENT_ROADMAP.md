@@ -151,7 +151,7 @@
 | **Storage** | S3 | Video file storage |
 | **Processing** | AWS MediaConvert, Lambda | Video intelligence |
 | **Search** | Bedrock/OpenAI | AI-powered insights |
-| **Deployment** | CloudFormation, Vercel | Infrastructure as code |
+| **Deployment** | CloudFormation, AWS Amplify | Infrastructure as code |
 
 ---
 
@@ -187,3 +187,4 @@
 
 ---
 **Memory Finder - Smart Development for Smart Weddings** 🎬✨
+

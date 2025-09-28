@@ -189,3 +189,4 @@ export async function testEmbeddingGeneration(): Promise<void> {
     console.error('Embedding test failed:', error)
   }
 }
+

@@ -31,3 +31,4 @@ aws amplify start-deployment --app-id d38luherx38o9k --branch-name main
 - Lambda execution
 - MediaConvert jobs
 - CloudWatch logs
+

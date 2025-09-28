@@ -172,7 +172,7 @@ Afternoon: Test final polish on all devices.
 Evening: Promote successful feature 
 ├── CI pulls into main branch
 ├── * Manual ok *                  # Final check (“yes!”) ✅  
-└── memory-finder.vercel.app 🌍    # LIVE CUSTOMERS ✅  
+└── memory-finder.amplifyapp.com 🌍    # LIVE CUSTOMERS ✅  
 ```
 
 ---
@@ -254,3 +254,4 @@ In other words, work on new capability here:
 5. ™   **BOOM:** backup cache fails  `prod + Dynamo Prod`
 
 This makes Memory Finder launch pad prepared for any beginner engineer going from experiments and testing gradually to production, smoothly!”
+
