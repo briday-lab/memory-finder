@@ -2,36 +2,105 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Heart, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Heart, Mail, Lock, Eye, EyeOff, User, Shield } from 'lucide-react'
+import { cognitoAuth, SignUpData, SignInData } from '@/lib/cognito-auth'
 
 export default function LandingPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    userType: 'couple' as 'videographer' | 'couple'
+  })
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     setError('')
     
-    // For demo purposes, redirect to dashboard
-    setTimeout(() => {
-      router.push('/dashboard')
-      setIsLoading(false)
-    }, 1000)
+    // TODO: Implement Google OAuth with Cognito
+    // For now, show professional message
+    setError('Google Sign-In integration coming soon. Please use email authentication.')
+    setIsLoading(false)
   }
 
   const handleEmailAuth = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
+    setSuccess('')
 
-    // For demo purposes, redirect to dashboard
-    setTimeout(() => {
-      router.push('/dashboard')
+    try {
+      if (isSignUp) {
+        const signUpData: SignUpData = {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          userType: formData.userType
+        }
+        
+        const result = await cognitoAuth.signUp(signUpData)
+        
+        if (result.success) {
+          if (result.requiresConfirmation) {
+            setSuccess('Account created! Please check your email for verification instructions.')
+            setIsSignUp(false) // Switch to sign in
+          } else {
+            setError(result.error || 'Sign up failed')
+          }
+        } else {
+          setError(result.error || 'Sign up failed')
+        }
+      } else {
+        const signInData: SignInData = {
+          email: formData.email,
+          password: formData.password
+        }
+        
+        const result = await cognitoAuth.signIn(signInData)
+        
+        if (result.success && result.user) {
+          setSuccess('Welcome back! Redirecting to dashboard...')
+          setTimeout(() => {
+            router.push('/dashboard')
+          }, 1500)
+        } else {
+          setError(result.error || 'Sign in failed')
+        }
+      }
+    } catch (error) {
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!formData.email) {
+      setError('Please enter your email address first')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+    
+    try {
+      const result = await cognitoAuth.forgotPassword(formData.email)
+      if (result.success) {
+        setSuccess('Password reset instructions sent to your email')
+      } else {
+        setError(result.error || 'Password reset failed')
+      }
+    } catch (error) {
+      setError('Failed to send password reset email')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -86,6 +155,24 @@ export default function LandingPage() {
 
         {/* Auth Form */}
         <div>
+          {/* AWS Cognito Professional Badge */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            padding: '0.75rem 1rem',
+            background: 'linear-gradient(135deg, #ff9900 0%, #ff6600 100%)',
+            borderRadius: '8px',
+            marginBottom: '1.5rem',
+            color: 'white',
+            fontSize: '0.875rem',
+            fontWeight: 600
+          }}>
+            <Shield size={18} />
+            Powered by AWS Cognito
+          </div>
+
           {/* Google Sign-In Button */}
           <button
             onClick={handleGoogleSignIn}
@@ -154,8 +241,94 @@ export default function LandingPage() {
             }}></div>
           </div>
 
+          {/* Success Message */}
+          {success && (
+            <div style={{
+              padding: '0.75rem',
+              background: '#f0f9ff',
+              border: '1px solid #0ea5e9',
+              borderRadius: '8px',
+              marginBottom: '1rem'
+            }}>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#0369a1',
+                margin: 0
+              }}>{success}</p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div style={{
+              padding: '0.75rem',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              marginBottom: '1rem'
+            }}>
+              <p style={{
+                fontSize: '0.875rem',
+                color: '#dc2626',
+                margin: 0
+              }}>{error}</p>
+            </div>
+          )}
+
           {/* Email Form */}
           <form onSubmit={handleEmailAuth}>
+            {/* Name Input (Sign Up Only) */}
+            {isSignUp && (
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Full Name
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <User style={{
+                    position: 'absolute',
+                    left: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '1rem',
+                    height: '1rem',
+                    color: '#9ca3af'
+                  }} />
+                  <input
+                    type="text"
+                    required={isSignUp}
+                    placeholder="Enter your full name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 0.75rem 0.75rem 2.5rem',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '0.875rem',
+                      background: 'white',
+                      transition: 'all 0.2s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = '#667eea'
+                      e.currentTarget.style.outline = 'none'
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = '#e5e7eb'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Email Input */}
             <div style={{ marginBottom: '1rem' }}>
               <label style={{
@@ -181,6 +354,8 @@ export default function LandingPage() {
                   type="email"
                   required
                   placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                   style={{
                     width: '100%',
                     padding: '0.75rem 0.75rem 0.75rem 2.5rem',
@@ -229,6 +404,8 @@ export default function LandingPage() {
                   type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
                   style={{
                     width: '100%',
                     padding: '0.75rem 2.5rem 0.75rem 2.5rem',
@@ -268,6 +445,61 @@ export default function LandingPage() {
                 </button>
               </div>
             </div>
+
+            {/* User Type Selection (Sign Up Only) */}
+            {isSignUp && (
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  I am a
+                </label>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '0.5rem'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({...formData, userType: 'couple'})}
+                    style={{
+                      padding: '0.75rem 1rem',
+                      border: `1px solid ${formData.userType === 'couple' ? '#667eea' : '#e5e7eb'}`,
+                      borderRadius: '8px',
+                      background: formData.userType === 'couple' ? '#f0f4ff' : 'white',
+                      color: formData.userType === 'couple' ? '#667eea' : '#374151',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Couple
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({...formData, userType: 'videographer'})}
+                    style={{
+                      padding: '0.75rem 1rem',
+                      border: `1px solid ${formData.userType === 'videographer' ? '#667eea' : '#e5e7eb'}`,
+                      borderRadius: '8px',
+                      background: formData.userType === 'videographer' ? '#f0f4ff' : 'white',
+                      color: formData.userType === 'videographer' ? '#667eea' : '#374151',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Videographer
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Error Message */}
             {error && (
@@ -315,9 +547,33 @@ export default function LandingPage() {
                 }
               }}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (isSignUp ? 'Creating Account...' : 'Signing In...') : (isSignUp ? 'Create Account' : 'Sign In')}
             </button>
           </form>
+
+          {/* Forgot Password */}
+          {!isSignUp && (
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '1rem'
+            }}>
+              <button
+                onClick={handleForgotPassword}
+                disabled={isLoading}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#667eea',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  textDecoration: 'underline',
+                  opacity: isLoading ? 0.7 : 1
+                }}
+              >
+                Forgot your password?
+              </button>
+            </div>
+          )}
 
           {/* Toggle Sign Up/Sign In */}
           <div style={{
