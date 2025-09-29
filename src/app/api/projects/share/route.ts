@@ -69,13 +69,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update project to link with couple
-    await query(
-      `UPDATE projects 
-       SET couple_id = $1, updated_at = NOW() 
-       WHERE id = $2`,
-      [coupleId, projectId]
-    )
+    // Note: We don't update the project's couple_id anymore since projects can be shared with multiple couples
 
     // Create project invitation record (for tracking and notifications)
     let invitationToken: string

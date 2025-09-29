@@ -28,14 +28,15 @@ export async function GET(request: NextRequest) {
       `
       params = [userId]
     } else if (userType === 'couple') {
-      // Couples see projects where they are the couple
+      // Couples see projects they have been invited to (via project_invitations table)
       projectsQuery = `
-        SELECT p.*, 
+        SELECT DISTINCT p.*, 
                COUNT(f.id) as file_count,
                COUNT(CASE WHEN f.status = 'completed' THEN 1 END) as processed_files
         FROM projects p
+        INNER JOIN project_invitations pi ON pi.project_id = p.id
         LEFT JOIN files f ON p.id = f.project_id
-        WHERE p.couple_id = $1
+        WHERE pi.couple_id = $1 AND pi.status = 'sent'
         GROUP BY p.id
         ORDER BY p.created_at DESC
       `
