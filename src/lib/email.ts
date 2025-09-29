@@ -1,5 +1,15 @@
 import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
+
+// AWS SES configuration
+const sesClient = new SESClient({
+  region: process.env.AWS_REGION || 'us-east-2',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  },
+})
 
 // Email configuration
 const EMAIL_CONFIG = {
@@ -56,7 +66,43 @@ export interface EmailResult {
 export async function sendProjectInvitationEmail(data: ProjectInvitationData): Promise<EmailResult> {
   const invitationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/invitation/${data.invitationToken}`
   
-  // Try Resend first (more reliable)
+  // Try AWS SES first (most reliable for production)
+  try {
+    const command = new SendEmailCommand({
+      Source: 'Memory Finder <noreply@memory-finder.com>',
+      Destination: {
+        ToAddresses: [data.coupleEmail],
+      },
+      Message: {
+        Subject: {
+          Data: `🎥 Your Wedding Video is Ready! - ${data.projectName}`,
+          Charset: 'UTF-8',
+        },
+        Body: {
+          Html: {
+            Data: generateInvitationEmailHTML(data, invitationUrl),
+            Charset: 'UTF-8',
+          },
+          Text: {
+            Data: generateInvitationEmailText(data, invitationUrl),
+            Charset: 'UTF-8',
+          },
+        },
+      },
+    })
+
+    const result = await sesClient.send(command)
+    console.log('Project invitation email sent via AWS SES:', result.MessageId)
+    
+    return {
+      success: true,
+      messageId: result.MessageId
+    }
+  } catch (error) {
+    console.error('AWS SES email failed, trying Resend:', error)
+  }
+  
+  // Try Resend as fallback
   const resendClient = createResendClient()
   if (resendClient) {
     try {

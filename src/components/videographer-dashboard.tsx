@@ -272,37 +272,47 @@ export default function VideographerDashboard() {
   }
 
 
-  const shareProject = async (data: { coupleEmail: string; coupleName: string; message: string }) => {
-    if (!selectedProject) {
-      throw new Error('No project selected')
-    }
+         const shareProject = async (data: { coupleEmail: string; coupleName: string; message: string }) => {
+           if (!selectedProject || !currentUserId) {
+             throw new Error('No project selected or user not authenticated')
+           }
 
-    const response = await fetch('/api/projects/share', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        projectId: selectedProject.id,
-        coupleEmail: data.coupleEmail,
-        coupleName: data.coupleName,
-        message: data.message
-      })
-    })
+           // Get the current user's access token
+           const accessToken = localStorage.getItem('cognito_access_token')
+           if (!accessToken) {
+             throw new Error('User not authenticated')
+           }
 
-    if (!response.ok) {
-      throw new Error('Failed to share project')
-    }
+           const response = await fetch('/api/projects/share', {
+             method: 'POST',
+             headers: { 
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${accessToken}`
+             },
+             body: JSON.stringify({
+               projectId: selectedProject.id,
+               coupleEmail: data.coupleEmail,
+               coupleName: data.coupleName,
+               message: data.message,
+               videographerId: currentUserId
+             })
+           })
 
-    const result = await response.json()
-    await loadProjects()
-    
-    return {
-      success: true,
-      emailSent: result.emailSent,
-      emailError: result.emailError,
-      shareableLink: result.shareableLink,
-      invitationToken: result.invitationToken
-    }
-  }
+           if (!response.ok) {
+             throw new Error('Failed to share project')
+           }
+
+           const result = await response.json()
+           await loadProjects()
+           
+           return {
+             success: true,
+             emailSent: result.emailSent,
+             emailError: result.emailError,
+             shareableLink: result.shareableLink,
+             invitationToken: result.invitationToken
+           }
+         }
 
   const loadProjectFiles = async (projectId: string) => {
     try {
