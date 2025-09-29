@@ -1,25 +1,38 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import VideographerDashboard from '@/components/videographer-dashboard'
 import CoupleDashboard from '@/components/couple-dashboard'
+import { cognitoAuth, CognitoUser } from '@/lib/cognito-auth'
 
 export default function DashboardPage() {
-  const sessionResult = useSession()
-  const { data: session, status } = sessionResult || {}
   const router = useRouter()
+  const [user, setUser] = useState<CognitoUser | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   
   useEffect(() => {
-    if (status === 'loading') return // Still loading
-    if (!session) {
-      router.push('/auth/signin')
-      return
+    const checkAuth = async () => {
+      try {
+        const currentUser = await cognitoAuth.getCurrentUser()
+        if (currentUser) {
+          setUser(currentUser)
+        } else {
+          // No user found, redirect to landing page
+          router.push('/')
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        router.push('/')
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }, [session, status, router])
 
-  if (status === 'loading') {
+    checkAuth()
+  }, [router])
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -30,19 +43,17 @@ export default function DashboardPage() {
     )
   }
 
-  if (!session) {
+  if (!user) {
     return null // Will redirect
   }
 
   // Route based on user type from Cognito
-  const sessionUserType = (session.user as { userType?: string })?.userType
-  const userType = sessionUserType || 'videographer'
+  const userType = user.userType || 'videographer'
   
   // Debug logging
   console.log('=== DASHBOARD ROUTING DEBUG ===')
-  console.log('Session user:', session.user)
-  console.log('Session userType:', sessionUserType)
-  console.log('Final user type:', userType)
+  console.log('Cognito user:', user)
+  console.log('User type:', userType)
   console.log('Will render:', userType === 'couple' ? 'CoupleDashboard' : 'VideographerDashboard')
   
   // Route directly to the appropriate dashboard based on user type
