@@ -55,6 +55,7 @@ interface VideoMoment {
 
 export default function CoupleDashboard() {
   console.log('CoupleDashboard component loaded')
+  const router = useRouter()
   const [user, setUser] = useState<{ email: string; name?: string; userType?: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [projects, setProjects] = useState<WeddingProject[]>([])
