@@ -1,4 +1,5 @@
 import { cognitoConfig, cognitoEndpoints, createCognitoHeaders, authParams, cognitoHostedUI } from './cognito-config'
+import crypto from 'crypto'
 
 export interface CognitoUser {
   id: string
@@ -32,12 +33,20 @@ export interface AuthResponse {
 class CognitoAuthService {
   private baseUrl = cognitoEndpoints.signIn
 
+  private calculateSecretHash(username: string): string {
+    return crypto
+      .createHmac('sha256', cognitoConfig.clientSecret)
+      .update(username + cognitoConfig.userPoolWebClientId)
+      .digest('base64')
+  }
+
   async signUp(data: SignUpData): Promise<AuthResponse> {
     try {
       const params = {
         ClientId: cognitoConfig.userPoolWebClientId,
         Username: data.email,
         Password: data.password,
+        SecretHash: this.calculateSecretHash(data.email),
         UserAttributes: [
           { Name: 'email', Value: data.email },
           { Name: 'name', Value: data.name },
@@ -83,6 +92,7 @@ class CognitoAuthService {
         AuthParameters: {
           USERNAME: data.email,
           PASSWORD: data.password,
+          SECRET_HASH: this.calculateSecretHash(data.email),
         },
       }
 
@@ -260,13 +270,19 @@ class CognitoAuthService {
   async refreshToken(): Promise<string | null> {
     try {
       const refreshToken = localStorage.getItem('cognito_refresh_token')
-      if (!refreshToken) return null
+      const idToken = localStorage.getItem('cognito_id_token')
+      if (!refreshToken || !idToken) return null
+
+      // Extract username from ID token
+      const payload = JSON.parse(atob(idToken.split('.')[1]))
+      const username = payload.sub || payload.email
 
       const params = {
         AuthFlow: 'REFRESH_TOKEN_AUTH',
         ClientId: cognitoConfig.userPoolWebClientId,
         AuthParameters: {
           REFRESH_TOKEN: refreshToken,
+          SECRET_HASH: this.calculateSecretHash(username),
         },
       }
 
@@ -299,6 +315,7 @@ class CognitoAuthService {
       const params = {
         ClientId: cognitoConfig.userPoolWebClientId,
         Username: email,
+        SecretHash: this.calculateSecretHash(email),
       }
 
       const response = await fetch(this.baseUrl, {
