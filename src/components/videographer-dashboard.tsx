@@ -102,16 +102,12 @@ export default function VideographerDashboard() {
 
       if (userResponse.ok) {
         const { user: dbUser } = await userResponse.json()
-        console.log('=== LOAD PROJECTS DEBUG ===')
-        console.log('dbUser:', dbUser)
-        console.log('Setting currentUserId to:', dbUser.id)
         setCurrentUserId(dbUser.id) // Set the current user ID
         
         // Load projects for this user
         const projectsResponse = await fetch(`/api/projects?userId=${dbUser.id}&userType=videographer`)
         if (projectsResponse.ok) {
           const { projects } = await projectsResponse.json()
-          console.log('Loaded projects:', projects)
           setProjects(projects)
         }
       }
@@ -288,13 +284,6 @@ export default function VideographerDashboard() {
              throw new Error('User not authenticated')
            }
 
-           // Debug logging
-           console.log('=== SHARE PROJECT DEBUG ===')
-           console.log('selectedProject:', selectedProject)
-           console.log('currentUserId:', currentUserId)
-           console.log('accessToken exists:', !!accessToken)
-           console.log('data:', data)
-
            const requestBody = {
              projectId: selectedProject.id,
              coupleEmail: data.coupleEmail,
@@ -302,7 +291,6 @@ export default function VideographerDashboard() {
              message: data.message,
              videographerId: currentUserId
            }
-           console.log('requestBody:', requestBody)
 
            const response = await fetch('/api/projects/share', {
              method: 'POST',
@@ -313,17 +301,12 @@ export default function VideographerDashboard() {
              body: JSON.stringify(requestBody)
            })
 
-           console.log('Response status:', response.status)
-           console.log('Response ok:', response.ok)
-
            if (!response.ok) {
              const errorText = await response.text()
-             console.error('Response error:', errorText)
              throw new Error(`Failed to share project: ${errorText}`)
            }
 
            const result = await response.json()
-           console.log('Share result:', result)
            await loadProjects()
            
            return {
