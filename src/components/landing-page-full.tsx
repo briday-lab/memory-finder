@@ -163,6 +163,146 @@ export default function LandingPage() {
     }
   }
 
+  if (showConfirmation) {
+    return (
+      <div style={{
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem'
+      }}>
+        <div style={{
+          width: '100%',
+          maxWidth: '400px',
+          background: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          padding: '2rem'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.5rem'
+            }}>
+              <Heart size={24} style={{ color: '#667eea' }} />
+              <h1 style={{
+                fontSize: '1.5rem',
+                fontWeight: 700,
+                color: '#1f2937',
+                margin: 0
+              }}>Memory Finder</h1>
+            </div>
+            <p style={{
+              fontSize: '0.875rem',
+              color: '#6b7280',
+              margin: 0
+            }}>Confirm Your Account</p>
+          </div>
+          
+          {error && (
+            <div style={{
+              padding: '0.75rem',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              marginBottom: '1rem'
+            }}>
+              <p style={{ fontSize: '0.875rem', color: '#dc2626', margin: 0 }}>{error}</p>
+            </div>
+          )}
+
+          {success && (
+            <div style={{
+              padding: '0.75rem',
+              background: '#f0f9ff',
+              border: '1px solid #0ea5e9',
+              borderRadius: '8px',
+              marginBottom: '1rem'
+            }}>
+              <p style={{ fontSize: '0.875rem', color: '#0369a1', margin: 0 }}>{success}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleConfirmation}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: '#374151',
+                marginBottom: '0.5rem'
+              }}>
+                Confirmation Code
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Enter the 6-digit code from your email"
+                value={confirmationCode}
+                onChange={(e) => setConfirmationCode(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  background: 'white',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                background: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginBottom: '1rem',
+                opacity: isLoading ? 0.7 : 1
+              }}
+            >
+              {isLoading ? 'Confirming...' : 'Confirm Account'}
+            </button>
+
+            <div style={{ textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirmation(false)
+                  setIsSignUp(false)
+                  setConfirmationCode('')
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#667eea',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Back to Sign In
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
@@ -173,7 +313,6 @@ export default function LandingPage() {
       justifyContent: 'center',
       padding: '1rem'
     }}>
-      {/* Main Container */}
       <div style={{
         width: '100%',
         maxWidth: '400px',
@@ -183,22 +322,15 @@ export default function LandingPage() {
         padding: '2rem',
         position: 'relative'
       }}>
-        {/* Logo */}
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '2rem'
-        }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <div style={{
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '0.5rem',
             marginBottom: '0.5rem'
           }}>
-            <Heart style={{
-              width: '2rem',
-              height: '2rem',
-              color: '#667eea'
-            }} />
+            <Heart size={24} style={{ color: '#667eea' }} />
             <h1 style={{
               fontSize: '1.5rem',
               fontWeight: 700,
@@ -213,9 +345,7 @@ export default function LandingPage() {
           }}>Wedding Video Search Platform</p>
         </div>
 
-        {/* Auth Form */}
         <div>
-          {/* AWS Cognito Professional Badge */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -233,7 +363,6 @@ export default function LandingPage() {
             Powered by AWS Cognito
           </div>
 
-          {/* Google Sign-In Button */}
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
@@ -247,25 +376,11 @@ export default function LandingPage() {
               fontSize: '0.875rem',
               fontWeight: 500,
               cursor: 'pointer',
-              transition: 'all 0.2s',
-              marginBottom: '1.5rem',
+              marginBottom: '1rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.5rem',
-              opacity: isLoading ? 0.7 : 1
-            }}
-            onMouseOver={(e) => {
-              if (!isLoading) {
-                e.currentTarget.style.borderColor = '#d1d5db'
-                e.currentTarget.style.backgroundColor = '#f9fafb'
-              }
-            }}
-            onMouseOut={(e) => {
-              if (!isLoading) {
-                e.currentTarget.style.borderColor = '#e5e7eb'
-                e.currentTarget.style.backgroundColor = 'white'
-              }
+              gap: '0.5rem'
             }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24">
@@ -277,11 +392,11 @@ export default function LandingPage() {
             Continue with Google
           </button>
 
-          {/* Divider */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            marginBottom: '1.5rem'
+            margin: '1rem 0',
+            gap: '1rem'
           }}>
             <div style={{
               flex: 1,
@@ -289,11 +404,9 @@ export default function LandingPage() {
               background: '#e5e7eb'
             }}></div>
             <span style={{
-              padding: '0 1rem',
-              fontSize: '0.75rem',
-              color: '#9ca3af',
-              fontWeight: 500
-            }}>OR</span>
+              fontSize: '0.875rem',
+              color: '#6b7280'
+            }}>or</span>
             <div style={{
               flex: 1,
               height: '1px',
@@ -301,7 +414,6 @@ export default function LandingPage() {
             }}></div>
           </div>
 
-          {/* Success Message */}
           {success && (
             <div style={{
               padding: '0.75rem',
@@ -318,7 +430,6 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
             <div style={{
               padding: '0.75rem',
@@ -335,107 +446,7 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* Confirmation Form */}
-          {showConfirmation ? (
-            <form onSubmit={handleConfirmation}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Confirmation Code
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter the 6-digit code from your email"
-                  value={confirmationCode}
-                  onChange={(e) => setConfirmationCode(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    background: 'white',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#667eea'
-                    e.currentTarget.style.outline = 'none'
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = '#e5e7eb'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  background: '#667eea',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  marginBottom: '1rem',
-                  opacity: isLoading ? 0.7 : 1
-                }}
-                onMouseOver={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.background = '#5a67d8'
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.background = '#667eea'
-                  }
-                }}
-              >
-                {isLoading ? 'Confirming...' : 'Confirm Account'}
-              </button>
-
-              <div style={{
-                textAlign: 'center',
-                fontSize: '0.875rem',
-                color: '#6b7280'
-              }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowConfirmation(false)
-                    setIsSignUp(false)
-                    setConfirmationCode('')
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#667eea',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    textDecoration: 'underline'
-                  }}
-                >
-                  Back to Sign In
-                </button>
-              </div>
-            </form>
-          ) : (
-            /* Email Form */
-            <form onSubmit={handleEmailAuth}>
-            {/* Name Input (Sign Up Only) */}
+          <form onSubmit={handleEmailAuth}>
             {isSignUp && (
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{
@@ -447,47 +458,24 @@ export default function LandingPage() {
                 }}>
                   Full Name
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <User style={{
-                    position: 'absolute',
-                    left: '0.75rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: '1rem',
-                    height: '1rem',
-                    color: '#9ca3af'
-                  }} />
-                  <input
-                    type="text"
-                    required={isSignUp}
-                    placeholder="Enter your full name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 0.75rem 0.75rem 2.5rem',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      fontSize: '0.875rem',
-                      background: 'white',
-                      transition: 'all 0.2s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = '#667eea'
-                      e.currentTarget.style.outline = 'none'
-                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = '#e5e7eb'
-                      e.currentTarget.style.boxShadow = 'none'
-                    }}
-                  />
-                </div>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    background: 'white',
+                    boxSizing: 'border-box'
+                  }}
+                />
               </div>
             )}
 
-            {/* Email Input */}
             <div style={{ marginBottom: '1rem' }}>
               <label style={{
                 display: 'block',
@@ -498,46 +486,23 @@ export default function LandingPage() {
               }}>
                 Email
               </label>
-              <div style={{ position: 'relative' }}>
-                <Mail style={{
-                  position: 'absolute',
-                  left: '0.75rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '1rem',
-                  height: '1rem',
-                  color: '#9ca3af'
-                }} />
-                <input
-                  type="email"
-                  required
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 0.75rem 0.75rem 2.5rem',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    background: 'white',
-                    transition: 'all 0.2s',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#667eea'
-                    e.currentTarget.style.outline = 'none'
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = '#e5e7eb'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
-                />
-              </div>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  background: 'white',
+                  boxSizing: 'border-box'
+                }}
+              />
             </div>
 
-            {/* Password Input */}
             <div style={{ marginBottom: '1rem' }}>
               <label style={{
                 display: 'block',
@@ -549,39 +514,20 @@ export default function LandingPage() {
                 Password
               </label>
               <div style={{ position: 'relative' }}>
-                <Lock style={{
-                  position: 'absolute',
-                  left: '0.75rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '1rem',
-                  height: '1rem',
-                  color: '#9ca3af'
-                }} />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   style={{
                     width: '100%',
-                    padding: '0.75rem 2.5rem 0.75rem 2.5rem',
+                    padding: '0.75rem 1rem',
+                    paddingRight: '3rem',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
                     fontSize: '0.875rem',
                     background: 'white',
-                    transition: 'all 0.2s',
                     boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#667eea'
-                    e.currentTarget.style.outline = 'none'
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = '#e5e7eb'
-                    e.currentTarget.style.boxShadow = 'none'
                   }}
                 />
                 <button
@@ -594,17 +540,15 @@ export default function LandingPage() {
                     transform: 'translateY(-50%)',
                     background: 'none',
                     border: 'none',
-                    cursor: 'pointer',
-                    color: '#9ca3af',
-                    padding: '0.25rem'
+                    color: '#6b7280',
+                    cursor: 'pointer'
                   }}
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            {/* User Type Selection (Sign Up Only) */}
             {isSignUp && (
               <div style={{ marginBottom: '1rem' }}>
                 <label style={{
@@ -616,24 +560,20 @@ export default function LandingPage() {
                 }}>
                   I am a
                 </label>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '0.5rem'
-                }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
                     type="button"
                     onClick={() => setFormData({...formData, userType: 'couple'})}
                     style={{
-                      padding: '0.75rem 1rem',
-                      border: `1px solid ${formData.userType === 'couple' ? '#667eea' : '#e5e7eb'}`,
+                      flex: 1,
+                      padding: '0.75rem',
+                      border: `2px solid ${formData.userType === 'couple' ? '#667eea' : '#e5e7eb'}`,
                       borderRadius: '8px',
                       background: formData.userType === 'couple' ? '#f0f4ff' : 'white',
                       color: formData.userType === 'couple' ? '#667eea' : '#374151',
                       fontSize: '0.875rem',
                       fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
+                      cursor: 'pointer'
                     }}
                   >
                     Couple
@@ -642,15 +582,15 @@ export default function LandingPage() {
                     type="button"
                     onClick={() => setFormData({...formData, userType: 'videographer'})}
                     style={{
-                      padding: '0.75rem 1rem',
-                      border: `1px solid ${formData.userType === 'videographer' ? '#667eea' : '#e5e7eb'}`,
+                      flex: 1,
+                      padding: '0.75rem',
+                      border: `2px solid ${formData.userType === 'videographer' ? '#667eea' : '#e5e7eb'}`,
                       borderRadius: '8px',
                       background: formData.userType === 'videographer' ? '#f0f4ff' : 'white',
                       color: formData.userType === 'videographer' ? '#667eea' : '#374151',
                       fontSize: '0.875rem',
                       fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
+                      cursor: 'pointer'
                     }}
                   >
                     Videographer
@@ -659,24 +599,6 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Error Message */}
-            {error && (
-              <div style={{
-                padding: '0.75rem',
-                background: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: '8px',
-                marginBottom: '1rem'
-              }}>
-                <p style={{
-                  fontSize: '0.875rem',
-                  color: '#dc2626',
-                  margin: 0
-                }}>{error}</p>
-              </div>
-            )}
-
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -690,26 +612,14 @@ export default function LandingPage() {
                 fontSize: '0.875rem',
                 fontWeight: 600,
                 cursor: 'pointer',
-                transition: 'all 0.2s',
                 marginBottom: '1rem',
                 opacity: isLoading ? 0.7 : 1
-              }}
-              onMouseOver={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.background = '#5a67d8'
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isLoading) {
-                  e.currentTarget.style.background = '#667eea'
-                }
               }}
             >
               {isLoading ? (isSignUp ? 'Creating Account...' : 'Signing In...') : (isSignUp ? 'Create Account' : 'Sign In')}
             </button>
           </form>
 
-          {/* Forgot Password */}
           {!isSignUp && (
             <div style={{
               textAlign: 'center',
@@ -717,15 +627,13 @@ export default function LandingPage() {
             }}>
               <button
                 onClick={handleForgotPassword}
-                disabled={isLoading}
                 style={{
                   background: 'none',
                   border: 'none',
                   color: '#667eea',
                   cursor: 'pointer',
                   fontSize: '0.875rem',
-                  textDecoration: 'underline',
-                  opacity: isLoading ? 0.7 : 1
+                  textDecoration: 'underline'
                 }}
               >
                 Forgot your password?
@@ -733,15 +641,18 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* Toggle Sign Up/Sign In */}
           <div style={{
             textAlign: 'center',
             fontSize: '0.875rem',
             color: '#6b7280'
           }}>
-            Don&apos;t have an account?{' '}
+            {isSignUp ? 'Already have an account?' : "Don&apos;t have an account?"}{' '}
             <button
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp)
+                setError('')
+                setSuccess('')
+              }}
               style={{
                 background: 'none',
                 border: 'none',
@@ -751,12 +662,11 @@ export default function LandingPage() {
                 textDecoration: 'underline'
               }}
             >
-              Sign up
+              {isSignUp ? 'Sign in' : 'Sign up'}
             </button>
           </div>
         </div>
 
-        {/* Footer */}
         <div style={{
           position: 'absolute',
           bottom: '-3rem',
