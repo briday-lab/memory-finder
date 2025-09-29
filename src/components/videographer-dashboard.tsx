@@ -102,6 +102,7 @@ export default function VideographerDashboard() {
 
       if (userResponse.ok) {
         const { user: dbUser } = await userResponse.json()
+        setCurrentUserId(dbUser.id) // Set the current user ID
         
         // Load projects for this user
         const projectsResponse = await fetch(`/api/projects?userId=${dbUser.id}&userType=videographer`)
@@ -149,33 +150,33 @@ export default function VideographerDashboard() {
     if (!user?.email) return
 
     try {
-      // Ensure we have a user id
-      let userId = currentUserId
-      if (!userId) {
-        // Create or fetch user via POST to guarantee existence
-        const ensureUser = await fetch('/api/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email,
-          name: user.name,
-          userType: 'videographer'
-        })
-        })
-        if (!ensureUser.ok) {
-          console.error('Failed to ensure user before creating project')
-          alert('Failed to create project. Please try again.')
-          return
-        }
-        const ensured = await ensureUser.json()
-        userId = ensured.user?.id || null
-        if (!userId) {
-          console.error('No user id returned from ensure user')
-          alert('Failed to create project. Please try again.')
-          return
-        }
-        setCurrentUserId(userId)
-      }
+             // Ensure we have a user id
+             let userId = currentUserId
+             if (!userId) {
+               // Create or fetch user via POST to guarantee existence
+               const ensureUser = await fetch('/api/users', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({
+                   email: user.email,
+                   name: user.name,
+                   userType: 'videographer'
+                 })
+               })
+               if (!ensureUser.ok) {
+                 console.error('Failed to ensure user before creating project')
+                 alert('Failed to create project. Please try again.')
+                 return
+               }
+               const ensured = await ensureUser.json()
+               userId = ensured.user?.id || null
+               if (!userId) {
+                 console.error('No user id returned from ensure user')
+                 alert('Failed to create project. Please try again.')
+                 return
+               }
+               setCurrentUserId(userId)
+             }
 
       const projectResponse = await fetch('/api/projects', {
         method: 'POST',
