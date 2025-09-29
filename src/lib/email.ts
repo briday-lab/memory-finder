@@ -65,6 +65,7 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
   
   // Try AWS SES first (most reliable for production)
   if (sesClient) {
+    let sesFailureError: unknown = null
     try {
       const command = new SendEmailCommand({
         Source: 'Memory Finder <info@briday.ca>',
@@ -97,7 +98,8 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
         messageId: result.MessageId
       }
     } catch (error) {
-      console.error('AWS SES email failed, trying Resend:', error)
+      console.error('AWS SES email failed:', error)
+      sesFailureError = error
     }
   } else {
     console.log('AWS SES not configured, trying Resend...')
@@ -129,9 +131,12 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
   // Fallback to SMTP
   const transporter = createTransporter()
   if (!transporter) {
+    // If SES was attempted and failed, surface that error instead of a generic message
     return {
       success: false,
-      error: 'No email service configured (neither Resend nor SMTP)'
+      error: (typeof (sesFailureError as any)?.message === 'string')
+        ? (sesFailureError as any).message
+        : 'Email send failed via SES and no fallback service is configured'
     }
   }
 
