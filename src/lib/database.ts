@@ -2,10 +2,10 @@ import { Pool } from 'pg'
 
 // Database connection configuration
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'memory-finder-db.chsiq2iuy4fb.us-east-2.rds.amazonaws.com',
   port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME || 'memoryfinder',
-  user: process.env.DB_USER || 'postgres',
+  user: process.env.DB_USER || 'memoryfinder',
   password: process.env.DB_PASSWORD || 'MemoryFinder2024!',
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 20, // Maximum number of clients in the pool
