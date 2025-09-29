@@ -71,31 +71,40 @@ export async function POST(request: NextRequest) {
 
     // Note: We don't update the project's couple_id anymore since projects can be shared with multiple couples
 
-    // Create project invitation record (for tracking and notifications)
-    let invitationToken: string
-    try {
-      const invitationResult = await query(
-        `INSERT INTO project_invitations (
-          project_id, videographer_id, couple_id, couple_email, 
-          invitation_message, status, invitation_token, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-        RETURNING invitation_token`,
-        [
-          projectId,
-          videographerId,
-          coupleId,
-          coupleEmail,
-          message || `You've been invited to view your wedding video project: ${project.project_name}`,
-          'sent',
-          crypto.randomUUID()
-        ]
-      )
-      invitationToken = invitationResult.rows[0].invitation_token
-    } catch (invitationError) {
-      console.warn('Failed to create invitation record (table may not exist):', invitationError)
-      // Generate a token anyway for email purposes
-      invitationToken = crypto.randomUUID()
-    }
+    // Ensure invitations table exists then create invitation record (for tracking and notifications)
+    // Create table if it does not exist (idempotent)
+    await query(
+      `CREATE TABLE IF NOT EXISTS project_invitations (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        videographer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        couple_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        couple_email VARCHAR(255) NOT NULL,
+        invitation_message TEXT,
+        status VARCHAR(50) NOT NULL DEFAULT 'sent',
+        invitation_token UUID NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )`
+    )
+
+    // Insert invitation (fail if it cannot be stored)
+    const invitationResult = await query(
+      `INSERT INTO project_invitations (
+        project_id, videographer_id, couple_id, couple_email, 
+        invitation_message, status, invitation_token, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      RETURNING invitation_token`,
+      [
+        projectId,
+        videographerId,
+        coupleId,
+        coupleEmail,
+        message || `You've been invited to view your wedding video project: ${project.project_name}`,
+        'sent',
+        crypto.randomUUID()
+      ]
+    )
+    const invitationToken = invitationResult.rows[0].invitation_token
 
     // Send invitation email
     let emailResult: { success: boolean; error: string } = { success: false, error: 'Email service not configured' }

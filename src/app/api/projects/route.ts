@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         FROM projects p
         INNER JOIN project_invitations pi ON pi.project_id = p.id
         LEFT JOIN files f ON p.id = f.project_id
-        WHERE pi.couple_id = $1 AND pi.status = 'sent'
+        WHERE pi.couple_id = $1 AND pi.status IN ('sent', 'accepted')
         GROUP BY p.id
         ORDER BY p.created_at DESC
       `
