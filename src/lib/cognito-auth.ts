@@ -310,6 +310,44 @@ class CognitoAuthService {
     }
   }
 
+  async confirmSignUp(email: string, confirmationCode: string): Promise<AuthResponse> {
+    try {
+      const params = {
+        ClientId: cognitoConfig.userPoolWebClientId,
+        Username: email,
+        ConfirmationCode: confirmationCode,
+        SecretHash: this.calculateSecretHash(email),
+      }
+
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ConfirmSignUp',
+        },
+        body: JSON.stringify(params),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        return {
+          success: true,
+        }
+      } else {
+        return {
+          success: false,
+          error: result.message || 'Confirmation failed',
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Network error during confirmation',
+      }
+    }
+  }
+
   async forgotPassword(email: string): Promise<AuthResponse> {
     try {
       const params = {

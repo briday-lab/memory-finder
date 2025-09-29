@@ -12,6 +12,8 @@ export default function LandingPage() {
   const [success, setSuccess] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [confirmationCode, setConfirmationCode] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -84,8 +86,8 @@ export default function LandingPage() {
         
         if (result.success) {
           if (result.requiresConfirmation) {
-            setSuccess('Account created! Please check your email for verification instructions.')
-            setIsSignUp(false) // Switch to sign in
+            setSuccess('Account created! Please check your email for the confirmation code.')
+            setShowConfirmation(true)
           } else {
             setError(result.error || 'Sign up failed')
           }
@@ -111,6 +113,28 @@ export default function LandingPage() {
       }
     } catch (error) {
       setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleConfirmation = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+    
+    try {
+      const result = await cognitoAuth.confirmSignUp(formData.email, confirmationCode)
+      if (result.success) {
+        setSuccess('Account confirmed! You can now sign in.')
+        setShowConfirmation(false)
+        setIsSignUp(false) // Switch to sign in
+        setConfirmationCode('')
+      } else {
+        setError(result.error || 'Confirmation failed')
+      }
+    } catch (error) {
+      setError('Failed to confirm account')
     } finally {
       setIsLoading(false)
     }
@@ -311,8 +335,106 @@ export default function LandingPage() {
             </div>
           )}
 
-          {/* Email Form */}
-          <form onSubmit={handleEmailAuth}>
+          {/* Confirmation Form */}
+          {showConfirmation ? (
+            <form onSubmit={handleConfirmation}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  color: '#374151',
+                  marginBottom: '0.5rem'
+                }}>
+                  Confirmation Code
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter the 6-digit code from your email"
+                  value={confirmationCode}
+                  onChange={(e) => setConfirmationCode(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    background: 'white',
+                    transition: 'all 0.2s',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = '#667eea'
+                    e.currentTarget.style.outline = 'none'
+                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)'
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#e5e7eb'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  marginBottom: '1rem',
+                  opacity: isLoading ? 0.7 : 1
+                }}
+                onMouseOver={(e) => {
+                  if (!isLoading) {
+                    e.currentTarget.style.background = '#5a67d8'
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!isLoading) {
+                    e.currentTarget.style.background = '#667eea'
+                  }
+                }}
+              >
+                {isLoading ? 'Confirming...' : 'Confirm Account'}
+              </button>
+
+              <div style={{
+                textAlign: 'center',
+                fontSize: '0.875rem',
+                color: '#6b7280'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConfirmation(false)
+                    setIsSignUp(false)
+                    setConfirmationCode('')
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#667eea',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    textDecoration: 'underline'
+                  }}
+                >
+                  Back to Sign In
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* Email Form */
+            <form onSubmit={handleEmailAuth}>
             {/* Name Input (Sign Up Only) */}
             {isSignUp && (
               <div style={{ marginBottom: '1rem' }}>
@@ -633,6 +755,7 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
+          )}
 
         {/* Footer */}
         <div style={{
