@@ -47,11 +47,11 @@ class CognitoAuthService {
 
       const response = await fetch(this.baseUrl, {
         method: 'POST',
-        headers: createCognitoHeaders(),
-        body: JSON.stringify({
-          ...params,
-          Target: 'AWSCognitoIdentityProviderService.SignUp',
-        }),
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.SignUp',
+        },
+        body: JSON.stringify(params),
       })
 
       const result = await response.json()
@@ -78,7 +78,8 @@ class CognitoAuthService {
   async signIn(data: SignInData): Promise<AuthResponse> {
     try {
       const params = {
-        ...authParams,
+        AuthFlow: 'USER_PASSWORD_AUTH',
+        ClientId: cognitoConfig.userPoolWebClientId,
         AuthParameters: {
           USERNAME: data.email,
           PASSWORD: data.password,
@@ -87,7 +88,10 @@ class CognitoAuthService {
 
       const response = await fetch(this.baseUrl, {
         method: 'POST',
-        headers: createCognitoHeaders(),
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        },
         body: JSON.stringify(params),
       })
 
@@ -268,7 +272,10 @@ class CognitoAuthService {
 
       const response = await fetch(this.baseUrl, {
         method: 'POST',
-        headers: createCognitoHeaders(),
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        },
         body: JSON.stringify(params),
       })
 
@@ -296,7 +303,10 @@ class CognitoAuthService {
 
       const response = await fetch(this.baseUrl, {
         method: 'POST',
-        headers: createCognitoHeaders(),
+        headers: {
+          'Content-Type': 'application/x-amz-json-1.1',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+        },
         body: JSON.stringify({
           ...params,
           Target: 'AWSCognitoIdentityProviderService.ForgotPassword',
