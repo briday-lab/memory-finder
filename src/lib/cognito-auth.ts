@@ -6,6 +6,7 @@ export interface CognitoUser {
   email: string
   name?: string
   emailVerified: boolean
+  userType?: string
   accessToken: string
   refreshToken: string
   idToken: string
@@ -257,6 +258,7 @@ class CognitoAuthService {
         email: payload.email,
         name: payload.name,
         emailVerified: payload.email_verified,
+        userType: payload['custom:user_type'] || 'videographer',
         accessToken,
         refreshToken,
         idToken,

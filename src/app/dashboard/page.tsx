@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import VideographerDashboard from '@/components/videographer-dashboard'
 import CoupleDashboard from '@/components/couple-dashboard'
 
@@ -11,9 +11,6 @@ export default function DashboardPage() {
   const { data: session, status } = sessionResult || {}
   const router = useRouter()
   
-  // For Google OAuth users, check localStorage for user type selection
-  const [localUserType, setLocalUserType] = useState<string | null>(null)
-
   useEffect(() => {
     if (status === 'loading') return // Still loading
     if (!session) {
@@ -21,13 +18,6 @@ export default function DashboardPage() {
       return
     }
   }, [session, status, router])
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUserType = localStorage.getItem('userType')
-      setLocalUserType(storedUserType)
-    }
-  }, [])
 
   if (status === 'loading') {
     return (
@@ -44,32 +34,19 @@ export default function DashboardPage() {
     return null // Will redirect
   }
 
-  // Route based on user type
+  // Route based on user type from Cognito
   const sessionUserType = (session.user as { userType?: string })?.userType
   const userType = sessionUserType || 'videographer'
-  
-  // Use localStorage user type if available, otherwise use session userType
-  // Only use localStorage value if we're on the client side
-  const finalUserType = (typeof window !== 'undefined' && localUserType) ? localUserType : userType
   
   // Debug logging
   console.log('=== DASHBOARD ROUTING DEBUG ===')
   console.log('Session user:', session.user)
   console.log('Session userType:', sessionUserType)
-  console.log('User type:', userType)
-  console.log('Local user type:', localUserType)
-  console.log('Final user type:', finalUserType)
-  console.log('Will render:', finalUserType === 'couple' ? 'CoupleDashboard' : 'VideographerDashboard')
+  console.log('Final user type:', userType)
+  console.log('Will render:', userType === 'couple' ? 'CoupleDashboard' : 'VideographerDashboard')
   
-  // If this is a Google OAuth user (no userType in session) and no localStorage userType,
-  // redirect to user type selection
-  if (!sessionUserType && (typeof window === 'undefined' || !localUserType)) {
-    console.log('Google OAuth user detected, redirecting to user type selection')
-    router.push('/auth/user-type')
-    return null
-  }
-  
-  if (finalUserType === 'couple') {
+  // Route directly to the appropriate dashboard based on user type
+  if (userType === 'couple') {
     console.log('Rendering CoupleDashboard')
     return <CoupleDashboard />
   }
