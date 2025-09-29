@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Memory Finder Custom Styles - Cache Cleared */
 
 /* Reset and Base Styles */
