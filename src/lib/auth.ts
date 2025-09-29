@@ -80,9 +80,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         // For Google OAuth, we need to determine user type differently
         if (user.email && !token.userType) {
-          // Don't set a default userType for Google OAuth users
-          // They will be redirected to user-type selection page
-          token.userType = undefined
+          // Default to videographer for Google OAuth users
+          token.userType = 'videographer'
         } else {
           token.userType = (user as { userType?: string }).userType || 'videographer'
         }
@@ -108,7 +107,7 @@ export const authOptions: NextAuthOptions = {
               user.id = userResult.rows[0].id
               user.userType = userResult.rows[0].user_type
             } else {
-              // Create user if they don't exist (will be redirected to user-type selection)
+              // Create user if they don't exist (default to videographer)
               const newUserResult = await query(
                 `INSERT INTO users (email, name, user_type) 
                  VALUES ($1, $2, $3) 
