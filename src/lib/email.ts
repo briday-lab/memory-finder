@@ -2,16 +2,11 @@ import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
 
-// AWS SES configuration
-const sesClient = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY 
-  ? new SESClient({
-      region: process.env.AWS_REGION || 'us-east-2',
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      },
-    })
-  : null
+// AWS SES configuration (use default AWS credential provider chain: IAM role, env, config)
+// This works on Amplify/EC2/Lambda without hardcoding credentials
+const sesClient = new SESClient({
+  region: process.env.AWS_REGION || 'us-east-2',
+})
 
 // Email configuration
 const EMAIL_CONFIG = {
