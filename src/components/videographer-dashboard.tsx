@@ -78,6 +78,8 @@ export default function VideographerDashboard() {
     wedding_date: '',
     description: ''
   })
+  const [editingProject, setEditingProject] = useState<WeddingProject | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
   const [showShareProject, setShowShareProject] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
   const [showProcessingQueue, setShowProcessingQueue] = useState(false)
@@ -140,6 +142,7 @@ export default function VideographerDashboard() {
 
   const createProject = async () => {
     if (!newProject.bride_name || !newProject.groom_name || !newProject.wedding_date) {
+      alert('Please fill in all required fields (Bride name, Groom name, and Wedding date)')
       return
     }
 
@@ -161,12 +164,14 @@ export default function VideographerDashboard() {
         })
         if (!ensureUser.ok) {
           console.error('Failed to ensure user before creating project')
+          alert('Failed to create project. Please try again.')
           return
         }
         const ensured = await ensureUser.json()
         userId = ensured.user?.id || null
         if (!userId) {
           console.error('No user id returned from ensure user')
+          alert('Failed to create project. Please try again.')
           return
         }
         setCurrentUserId(userId)
@@ -191,9 +196,54 @@ export default function VideographerDashboard() {
         setSelectedProject(project)
         setIsCreatingProject(false)
         setNewProject({ bride_name: '', groom_name: '', wedding_date: '', description: '' })
+        alert('Event created successfully!')
+      } else {
+        const errorData = await projectResponse.json()
+        console.error('Failed to create project:', errorData)
+        alert(`Failed to create project: ${errorData.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error creating project:', error)
+      alert('Failed to create project. Please try again.')
+    }
+  }
+
+  const editProject = async () => {
+    if (!editingProject) return
+    
+    if (!editingProject.bride_name || !editingProject.groom_name || !editingProject.wedding_date) {
+      alert('Please fill in all required fields (Bride name, Groom name, and Wedding date)')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${editingProject.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectName: `${editingProject.bride_name} + ${editingProject.groom_name}`,
+          brideName: editingProject.bride_name,
+          groomName: editingProject.groom_name,
+          weddingDate: editingProject.wedding_date,
+          description: editingProject.description
+        })
+      })
+
+      if (response.ok) {
+        const { project } = await response.json()
+        setProjects(prev => prev.map(p => p.id === project.id ? project : p))
+        setSelectedProject(project)
+        setIsEditing(false)
+        setEditingProject(null)
+        alert('Event updated successfully!')
+      } else {
+        const errorData = await response.json()
+        console.error('Failed to update project:', errorData)
+        alert(`Failed to update project: ${errorData.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error updating project:', error)
+      alert('Failed to update project. Please try again.')
     }
   }
 
@@ -208,14 +258,16 @@ export default function VideographerDashboard() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to delete project')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete project')
       }
 
       await loadProjects()
+      setSelectedProject(null)
       alert('Project deleted successfully!')
     } catch (error) {
       console.error('Error deleting project:', error)
-      alert('Failed to delete project')
+      alert(`Failed to delete project: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -560,6 +612,71 @@ export default function VideographerDashboard() {
                       projectName={selectedProject?.project_name || ''}
                       onShare={shareProject}
                     />
+
+                    {/* Edit Project Modal */}
+                    <Dialog open={isEditing} onOpenChange={setIsEditing}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Edit Wedding Event</DialogTitle>
+                          <DialogDescription>
+                            Update the couple&apos;s details for this wedding project
+                          </DialogDescription>
+                        </DialogHeader>
+                        {editingProject && (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="edit_bride_name">Bride&apos;s Name</Label>
+                                <Input
+                                  id="edit_bride_name"
+                                  value={editingProject.bride_name || ''}
+                                  onChange={(e) => setEditingProject(prev => prev ? { ...prev, bride_name: e.target.value } : null)}
+                                  placeholder="Julia"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="edit_groom_name">Groom&apos;s Name</Label>
+                                <Input
+                                  id="edit_groom_name"
+                                  value={editingProject.groom_name || ''}
+                                  onChange={(e) => setEditingProject(prev => prev ? { ...prev, groom_name: e.target.value } : null)}
+                                  placeholder="Tom"
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="edit_wedding_date">Wedding Date</Label>
+                              <Input
+                                id="edit_wedding_date"
+                                type="date"
+                                value={editingProject.wedding_date || ''}
+                                onChange={(e) => setEditingProject(prev => prev ? { ...prev, wedding_date: e.target.value } : null)}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="edit_description">Description (Optional)</Label>
+                              <Input
+                                id="edit_description"
+                                value={editingProject.description || ''}
+                                onChange={(e) => setEditingProject(prev => prev ? { ...prev, description: e.target.value } : null)}
+                                placeholder="Beautiful outdoor ceremony..."
+                              />
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button variant="outline" onClick={() => {
+                                setIsEditing(false)
+                                setEditingProject(null)
+                              }}>
+                                Cancel
+                              </Button>
+                              <Button onClick={editProject}>
+                                Update Event
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </CardHeader>
@@ -600,8 +717,8 @@ export default function VideographerDashboard() {
                             className="h-6 px-2 text-xs"
                             onClick={(e) => {
                               e.stopPropagation()
-                              // TODO: Add edit project functionality
-                              alert('Edit project functionality coming soon!')
+                              setEditingProject(project)
+                              setIsEditing(true)
                             }}
                           >
                             <Edit3 className="h-3 w-3" />
