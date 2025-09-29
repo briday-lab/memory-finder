@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { cognitoAuth } from '@/lib/cognito-auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -54,8 +55,8 @@ interface VideoMoment {
 
 export default function CoupleDashboard() {
   console.log('CoupleDashboard component loaded')
-  const sessionResult = useSession()
-  const { data: session } = sessionResult || {}
+  const [user, setUser] = useState<{ email: string; name?: string; userType?: string } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [projects, setProjects] = useState<WeddingProject[]>([])
   const [selectedProject, setSelectedProject] = useState<WeddingProject | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -68,7 +69,7 @@ export default function CoupleDashboard() {
   const [activeMoment, setActiveMoment] = useState<VideoMoment | null>(null)
 
   const loadSharedProjects = useCallback(async () => {
-    if (!session?.user?.email) return
+    if (!user?.email) return
 
     try {
       // First, ensure user exists in database
@@ -76,8 +77,8 @@ export default function CoupleDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: session.user.email,
-          name: session.user.name,
+          email: user.email,
+          name: user.name,
           userType: 'couple'
         })
       })
@@ -101,12 +102,35 @@ export default function CoupleDashboard() {
     } catch (error) {
       console.error('Error loading shared projects:', error)
     }
-  }, [session])
+  }, [user])
 
   // Load shared projects for the couple
   useEffect(() => {
-    loadSharedProjects()
-  }, [loadSharedProjects])
+    const checkAuth = async () => {
+      try {
+        const currentUser = await cognitoAuth.getCurrentUser()
+        if (currentUser) {
+          setUser(currentUser)
+        } else {
+          // No user found, redirect to landing page
+          router.push('/')
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        router.push('/')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [router])
+
+  useEffect(() => {
+    if (user) {
+      loadSharedProjects()
+    }
+  }, [user, loadSharedProjects])
 
   const getVideoUrl = async (fileId: string, s3Key?: string) => {
     if (videoUrls[fileId]) return videoUrls[fileId]
@@ -318,6 +342,21 @@ export default function CoupleDashboard() {
     { title: 'First Dance', query: 'first dance', icon: '💃' }
   ]
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your memories...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null // Will redirect
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
       {/* Header */}
@@ -332,8 +371,8 @@ export default function CoupleDashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {session?.user?.name}</span>
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
+              <span className="text-gray-700">Welcome, {user?.name || user?.email}</span>
+              <Button variant="outline" size="sm" onClick={() => cognitoAuth.signOut()}>
                 <LogOut className="h-4 w-4 mr-2" /> Sign Out
               </Button>
             </div>
