@@ -305,12 +305,9 @@ class CognitoAuthService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-amz-json-1.1',
-          'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+          'X-Amz-Target': 'AWSCognitoIdentityProviderService.ForgotPassword',
         },
-        body: JSON.stringify({
-          ...params,
-          Target: 'AWSCognitoIdentityProviderService.ForgotPassword',
-        }),
+        body: JSON.stringify(params),
       })
 
       const result = await response.json()
