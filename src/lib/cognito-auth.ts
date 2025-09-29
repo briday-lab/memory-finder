@@ -141,19 +141,6 @@ class CognitoAuthService {
     }
   }
 
-  async signOut(): Promise<void> {
-    try {
-      // Clear stored tokens
-      localStorage.removeItem('cognito_access_token')
-      localStorage.removeItem('cognito_refresh_token')
-      localStorage.removeItem('cognito_id_token')
-
-      // Redirect to home page
-      window.location.href = '/'
-    } catch (error) {
-      console.error('Sign out error:', error)
-    }
-  }
 
   async signInWithGoogle(): Promise<void> {
     try {
@@ -384,6 +371,20 @@ class CognitoAuthService {
         success: false,
         error: 'Network error during password reset',
       }
+    }
+  }
+
+  async signOut(): Promise<void> {
+    try {
+      // Clear all stored tokens
+      localStorage.removeItem('cognito_access_token')
+      localStorage.removeItem('cognito_refresh_token')
+      localStorage.removeItem('cognito_id_token')
+      
+      console.log('User signed out successfully')
+    } catch (error) {
+      console.error('Sign out error:', error)
+      throw error
     }
   }
 }

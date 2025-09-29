@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { cognitoAuth } from '@/lib/cognito-auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -58,8 +59,8 @@ interface File {
 
 export default function VideographerDashboard() {
   console.log('VideographerDashboard component loaded')
-  const sessionResult = useSession()
-  const { data: session } = sessionResult || {}
+  const router = useRouter()
+  const [user, setUser] = useState<{ email: string; name?: string; userType?: string } | null>(null)
   const [projects, setProjects] = useState<WeddingProject[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [selectedProject, setSelectedProject] = useState<WeddingProject | null>(null)
@@ -83,7 +84,7 @@ export default function VideographerDashboard() {
   const [processingFiles, setProcessingFiles] = useState<File[]>([])
 
   const loadProjects = useCallback(async () => {
-    if (!session?.user?.email) return
+    if (!user?.email) return
 
     try {
       // First, ensure user exists in database
@@ -91,17 +92,17 @@ export default function VideographerDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: session.user.email,
-          name: session.user.name,
+          email: user.email,
+          name: user.name,
           userType: 'videographer'
         })
       })
 
       if (userResponse.ok) {
-        const { user } = await userResponse.json()
+        const { user: dbUser } = await userResponse.json()
         
         // Load projects for this user
-        const projectsResponse = await fetch(`/api/projects?userId=${user.id}&userType=videographer`)
+        const projectsResponse = await fetch(`/api/projects?userId=${dbUser.id}&userType=videographer`)
         if (projectsResponse.ok) {
           const { projects } = await projectsResponse.json()
           setProjects(projects)
@@ -110,19 +111,39 @@ export default function VideographerDashboard() {
     } catch (error) {
       console.error('Error loading projects:', error)
     }
-  }, [session?.user?.email, session?.user?.name])
+  }, [user?.email, user?.name])
 
-  // Load projects on component mount
+  // Load user and projects on component mount
   useEffect(() => {
-    loadProjects()
-  }, [loadProjects])
+    const checkAuth = async () => {
+      try {
+        const currentUser = await cognitoAuth.getCurrentUser()
+        if (currentUser) {
+          setUser(currentUser)
+        } else {
+          router.push('/')
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        router.push('/')
+      }
+    }
+
+    checkAuth()
+  }, [router])
+
+  useEffect(() => {
+    if (user) {
+      loadProjects()
+    }
+  }, [user, loadProjects])
 
   const createProject = async () => {
     if (!newProject.bride_name || !newProject.groom_name || !newProject.wedding_date) {
       return
     }
 
-    if (!session?.user?.email) return
+    if (!user?.email) return
 
     try {
       // Ensure we have a user id
@@ -132,11 +153,11 @@ export default function VideographerDashboard() {
         const ensureUser = await fetch('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: session.user.email,
-            name: session.user.name,
-            userType: 'videographer'
-          })
+        body: JSON.stringify({
+          email: user.email,
+          name: user.name,
+          userType: 'videographer'
+        })
         })
         if (!ensureUser.ok) {
           console.error('Failed to ensure user before creating project')
@@ -422,7 +443,7 @@ export default function VideographerDashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {session?.user?.name}</span>
+              <span className="text-gray-700">Welcome, {user?.name}</span>
               
               <Button 
                 variant="outline" 
@@ -432,7 +453,14 @@ export default function VideographerDashboard() {
                 <BarChart3 className="h-4 w-4 mr-2" /> Analytics
               </Button>
 
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
+              <Button variant="outline" size="sm" onClick={async () => {
+                try {
+                  await cognitoAuth.signOut()
+                  router.push('/')
+                } catch (error) {
+                  console.error('Sign out failed:', error)
+                }
+              }}>
                 <LogOut className="h-4 w-4 mr-2" /> Sign Out
               </Button>
             </div>
@@ -464,12 +492,12 @@ export default function VideographerDashboard() {
                       <DialogTrigger asChild>
                         <Button size="sm" className="flex items-center space-x-1">
                           <Plus className="h-4 w-4" />
-                          <span>New Event</span>
+                          <span>{projects.length === 0 ? 'Create Your First Event' : 'New Event'}</span>
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Create New Wedding Event</DialogTitle>
+                          <DialogTitle>{projects.length === 0 ? 'Create Your First Wedding Event' : 'Create New Wedding Event'}</DialogTitle>
                           <DialogDescription>
                             Enter the couple&apos;s details to create a new wedding project
                           </DialogDescription>
