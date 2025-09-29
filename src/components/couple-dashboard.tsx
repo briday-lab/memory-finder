@@ -373,7 +373,15 @@ export default function CoupleDashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-700">Welcome, {user?.name || user?.email}</span>
-              <Button variant="outline" size="sm" onClick={() => cognitoAuth.signOut()}>
+              <Button variant="outline" size="sm" onClick={async () => {
+                try {
+                  await cognitoAuth.signOut()
+                  // Clear user state immediately
+                  setUser(null)
+                } catch (error) {
+                  console.error('Error signing out:', error)
+                }
+              }}>
                 <LogOut className="h-4 w-4 mr-2" /> Sign Out
               </Button>
             </div>

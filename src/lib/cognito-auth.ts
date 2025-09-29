@@ -382,6 +382,11 @@ class CognitoAuthService {
       localStorage.removeItem('cognito_id_token')
       
       console.log('User signed out successfully')
+      
+      // Redirect to home page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/'
+      }
     } catch (error) {
       console.error('Sign out error:', error)
       throw error

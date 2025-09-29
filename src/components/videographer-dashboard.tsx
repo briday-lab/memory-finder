@@ -522,6 +522,8 @@ export default function VideographerDashboard() {
               <Button variant="outline" size="sm" onClick={async () => {
                 try {
                   await cognitoAuth.signOut()
+                  // Clear user state immediately
+                  setUser(null)
                   router.push('/')
                 } catch (error) {
                   console.error('Sign out failed:', error)
