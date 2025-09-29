@@ -69,7 +69,7 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
   // Try AWS SES first (most reliable for production)
   try {
     const command = new SendEmailCommand({
-      Source: 'Memory Finder <noreply@memory-finder.com>',
+      Source: 'Memory Finder <info@briday.ca>',
       Destination: {
         ToAddresses: [data.coupleEmail],
       },
@@ -107,7 +107,7 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
   if (resendClient) {
     try {
       const result = await resendClient.emails.send({
-        from: 'Memory Finder <noreply@memory-finder.com>',
+        from: 'Memory Finder <info@briday.ca>',
         to: [data.coupleEmail],
         subject: `🎥 Your Wedding Video is Ready! - ${data.projectName}`,
         html: generateInvitationEmailHTML(data, invitationUrl),
@@ -136,7 +136,7 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
 
   try {
     const mailOptions = {
-      from: `"${data.videographerName}" <${EMAIL_CONFIG.auth.user}>`,
+      from: `"Memory Finder" <info@briday.ca>`,
       to: data.coupleEmail,
       subject: `🎥 Your Wedding Video is Ready! - ${data.projectName}`,
       html: generateInvitationEmailHTML(data, invitationUrl),
@@ -182,7 +182,7 @@ export async function sendProcessingCompleteEmail(
     const dashboardUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
     
     const mailOptions = {
-      from: `"Memory Finder" <${EMAIL_CONFIG.auth.user}>`,
+      from: `"Memory Finder" <info@briday.ca>`,
       to: videographerEmail,
       subject: `✅ Video Processing Complete - ${projectName}`,
       html: generateProcessingCompleteHTML(videographerName, projectName, fileCount, dashboardUrl),
