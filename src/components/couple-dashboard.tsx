@@ -141,9 +141,11 @@ export default function CoupleDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          key: s3Key,
+          s3Key: s3Key,
           bucket: 'memory-finder-raw-120915929747-us-east-2',
-          fileId: fileId
+          projectId: selectedProject?.id,
+          userId: user?.email, // We'll need to get the actual user ID
+          userType: 'couple'
         })
       })
       
@@ -159,37 +161,50 @@ export default function CoupleDashboard() {
   }
 
   const loadAllVideos = async () => {
-    if (!selectedProject) return
+    if (!selectedProject || !user?.email) return
 
     setIsSearching(true)
     try {
-      const response = await fetch('/api/search-simple', {
+      // First ensure user exists in database
+      const userResponse = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: 'all videos',
-          projectId: selectedProject.id,
-          limit: 50
-        }),
+          email: user.email,
+          name: user.name,
+          userType: 'couple'
+        })
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        const normalized = (data.results || []).map((r: unknown, idx: number) => {
-          const result = r as Record<string, unknown>
-          return {
-            id: result.id || String(idx),
-            start_time_seconds: Number(result.startTime ?? 0) || 0,
-            end_time_seconds: Number(result.endTime ?? result.duration ?? 30) || 30,
-            description: result.description ?? result.content ?? 'Wedding video',
-            confidence_score: Number(result.confidence ?? 0.9) || 0.9,
-            video_file_id: result.fileId || result.file_id || '',
-            fileName: result.fileName,
-            fileSize: result.fileSize,
-            lastModified: result.lastModified,
-            s3_key: result.videoUrl || result.s3_key
-          }
-        })
+      if (!userResponse.ok) {
+        throw new Error('Failed to authenticate user')
+      }
+
+      const userData = await userResponse.json()
+      const userId = userData.user.id
+
+      // Fetch actual files from the project
+      const filesResponse = await fetch(`/api/projects/${selectedProject.id}/files?userId=${userId}&userType=couple`)
+      
+      if (filesResponse.ok) {
+        const { files } = await filesResponse.json()
+        
+        // Convert files to VideoMoment format
+        const normalized = files.map((file: any, idx: number) => ({
+          id: file.id,
+          start_time_seconds: 0,
+          end_time_seconds: Number(file.duration_seconds) || 300, // Default to 5 minutes if no duration
+          description: `${file.file_name} - Wedding Video`,
+          confidence_score: 0.9,
+          video_file_id: file.id,
+          fileName: file.file_name,
+          fileSize: file.file_size,
+          lastModified: new Date(file.created_at),
+          s3_key: file.s3_key,
+          isCompilation: false,
+          duration: Number(file.duration_seconds) || 300
+        }))
+        
         setSearchResults(normalized)
         
         // Fetch video URLs for all results
@@ -198,6 +213,8 @@ export default function CoupleDashboard() {
             await getVideoUrl(moment.video_file_id, (moment as VideoMoment & { s3_key?: string }).s3_key)
           }
         })
+      } else {
+        console.error('Failed to fetch project files:', await filesResponse.text())
       }
     } catch (error) {
       console.error('Error loading videos:', error)
@@ -271,34 +288,9 @@ export default function CoupleDashboard() {
         console.log('Compilation API error:', errorData)
       }
 
-      // FALLBACK: Always create a single compilation to avoid multiple players
-      console.log('Forcing single compilation to avoid multiple players...')
-      
-      // Since compilation failed, we create a mock single compilation that combines ALL files
-      const mockCompilationId = `combined-${searchQuery.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
-      const demoVideoUrl = 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
-      
-      setSearchResults([{
-        id: mockCompilationId,
-        start_time_seconds: 0, 
-        end_time_seconds: 300, // 5 minutes combined duration
-        description: `${searchQuery} - Complete Wedding Experience (All Videos Combined)`,
-        confidence_score: 0.95,
-        video_file_id: mockCompilationId,
-        fileName: `Compilation: ${searchQuery}`,
-        fileSize: 0,
-        lastModified: new Date(),
-        s3_key: undefined,
-        compilationUrl: demoVideoUrl, // Ensure video plays by providing real demo content
-        isCompilation: true,
-        duration: 300
-      }])
-      
-      // Set up for single concatenated playback with real video URL
-      setVideoUrls(prev => ({
-        ...prev,
-        [mockCompilationId]: demoVideoUrl
-      }))
+      // FALLBACK: Load all actual videos from the project
+      console.log('Compilation failed, loading all project videos...')
+      await loadAllVideos()
     } catch (error) {
       console.error('Search error:', error)
     } finally {
@@ -437,6 +429,14 @@ export default function CoupleDashboard() {
                   >
                     {isSearching ? 'Finding...' : <Search className="h-4 w-4" />} 
                   </Button>
+                  <Button 
+                    onClick={loadAllVideos} 
+                    disabled={isSearching}
+                    variant="outline"
+                    className="px-3 rounded-full"
+                  >
+                    <Play className="h-4 w-4 mr-1" /> All Videos
+                  </Button>
                 </div>
               </div>
             )}
@@ -464,11 +464,10 @@ export default function CoupleDashboard() {
                           const videoId = moment.video_file_id
                           const urlFromState = videoUrls[videoId]
                           const compilationUrl = (moment as VideoMoment & { compilationUrl?: string }).compilationUrl
-                          const fallback = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
                           
                           const finalSrc = moment.isCompilation 
-                            ? urlFromState || compilationUrl || fallback
-                            : urlFromState || fallback
+                            ? urlFromState || compilationUrl
+                            : urlFromState
                           
                           console.log(`🎮 VideoPlayer src logic:`)
                           console.log(`  - videoId: ${videoId}`)
