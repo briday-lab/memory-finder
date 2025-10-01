@@ -137,6 +137,24 @@ export default function CoupleDashboard() {
     if (videoUrls[fileId]) return videoUrls[fileId]
     
     try {
+      // First ensure user exists in database to get userId
+      const userResponse = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user?.email,
+          name: user?.name,
+          userType: 'couple'
+        })
+      })
+
+      if (!userResponse.ok) {
+        throw new Error('Failed to authenticate user')
+      }
+
+      const userData = await userResponse.json()
+      const userId = userData.user.id
+
       const response = await fetch('/api/video-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,7 +162,7 @@ export default function CoupleDashboard() {
           s3Key: s3Key,
           bucket: 'memory-finder-raw-120915929747-us-east-2',
           projectId: selectedProject?.id,
-          userId: user?.email, // We'll need to get the actual user ID
+          userId: userId,
           userType: 'couple'
         })
       })
