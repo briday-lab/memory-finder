@@ -33,6 +33,15 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(projectId) || !uuidRegex.test(videographerId)) {
+      console.error('❌ Invalid UUID format:', { projectId, videographerId })
+      return NextResponse.json({ 
+        error: 'Invalid project ID or videographer ID format' 
+      }, { status: 400 })
+    }
+
     // Verify the user is the videographer for this project
     const projectResult = await query(
       `SELECT p.*, u.email as videographer_email, u.name as videographer_name
@@ -43,6 +52,7 @@ export async function POST(request: NextRequest) {
     )
 
     if (projectResult.rows.length === 0) {
+      console.error('❌ Project not found or access denied:', { projectId, videographerId })
       return NextResponse.json({ 
         error: 'Project not found or you do not have permission to share it' 
       }, { status: 404 })
