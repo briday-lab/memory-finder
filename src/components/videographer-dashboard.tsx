@@ -274,8 +274,30 @@ export default function VideographerDashboard() {
 
 
          const shareProject = async (data: { coupleEmail: string; coupleName: string; message: string }) => {
-           if (!selectedProject || !currentUserId) {
-             throw new Error('No project selected or user not authenticated')
+           if (!selectedProject) {
+             throw new Error('No project selected')
+           }
+
+           // Ensure we have a user ID
+           let userId = currentUserId
+           if (!userId) {
+             // Create or fetch user via POST to guarantee existence
+             const ensureUser = await fetch('/api/users', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 email: user?.email,
+                 name: user?.name,
+                 userType: 'videographer'
+               })
+             })
+             if (ensureUser.ok) {
+               const { user: dbUser } = await ensureUser.json()
+               userId = dbUser.id
+               setCurrentUserId(dbUser.id)
+             } else {
+               throw new Error('Failed to authenticate user')
+             }
            }
 
            // Get the current user's access token
@@ -289,7 +311,7 @@ export default function VideographerDashboard() {
              coupleEmail: data.coupleEmail,
              coupleName: data.coupleName,
              message: data.message,
-             videographerId: currentUserId
+             videographerId: userId
            }
 
            const response = await fetch('/api/projects/share', {

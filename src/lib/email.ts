@@ -134,8 +134,8 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
     // If SES was attempted and failed, surface that error instead of a generic message
     return {
       success: false,
-      error: (typeof (sesFailureError as any)?.message === 'string')
-        ? (sesFailureError as any).message
+      error: (typeof (sesFailureError as Error)?.message === 'string')
+        ? (sesFailureError as Error).message
         : 'Email send failed via SES and no fallback service is configured'
     }
   }
