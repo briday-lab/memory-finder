@@ -34,15 +34,44 @@ CREATE TABLE projects (
 CREATE TABLE files (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-  filename VARCHAR(255) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
   s3_key VARCHAR(500) NOT NULL,
-  s3_bucket VARCHAR(255) NOT NULL,
+  s3_bucket VARCHAR(255) DEFAULT 'memory-finder-raw-120915929747-us-east-2',
   file_size BIGINT,
   file_type VARCHAR(100),
   duration_seconds NUMERIC(10, 3), -- Video duration
   status VARCHAR(50) DEFAULT 'uploaded', -- 'uploaded', 'processing', 'completed', 'failed'
   processing_progress INT DEFAULT 0, -- 0-100
   step_functions_execution_arn VARCHAR(500), -- Track pipeline execution
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Project Invitations table (for sharing projects with couples)
+CREATE TABLE project_invitations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  videographer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  couple_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  couple_email VARCHAR(255) NOT NULL,
+  invitation_message TEXT,
+  status VARCHAR(50) NOT NULL DEFAULT 'sent', -- 'sent', 'accepted', 'declined'
+  invitation_token UUID NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Video Moments table (for couple dashboard)
+CREATE TABLE video_moments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+  video_file_id UUID REFERENCES files(id) ON DELETE CASCADE,
+  start_time_seconds NUMERIC(10, 3) NOT NULL,
+  end_time_seconds NUMERIC(10, 3) NOT NULL,
+  description TEXT NOT NULL,
+  confidence_score NUMERIC(5, 4) DEFAULT 0.0,
+  tags TEXT[],
+  emotion VARCHAR(50),
+  scene_type VARCHAR(50),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -139,6 +168,17 @@ CREATE INDEX idx_projects_couple_id ON projects(couple_id);
 CREATE INDEX idx_files_project_id ON files(project_id);
 CREATE INDEX idx_files_status ON files(status);
 CREATE INDEX idx_files_step_functions_execution_arn ON files(step_functions_execution_arn);
+
+CREATE INDEX idx_project_invitations_project_id ON project_invitations(project_id);
+CREATE INDEX idx_project_invitations_couple_id ON project_invitations(couple_id);
+CREATE INDEX idx_project_invitations_videographer_id ON project_invitations(videographer_id);
+CREATE INDEX idx_project_invitations_status ON project_invitations(status);
+CREATE INDEX idx_project_invitations_token ON project_invitations(invitation_token);
+
+CREATE INDEX idx_video_moments_project_id ON video_moments(project_id);
+CREATE INDEX idx_video_moments_video_file_id ON video_moments(video_file_id);
+CREATE INDEX idx_video_moments_start_time ON video_moments(start_time_seconds);
+CREATE INDEX idx_video_moments_confidence ON video_moments(confidence_score);
 
 CREATE INDEX idx_ai_analysis_file_id ON ai_analysis(file_id);
 CREATE INDEX idx_ai_analysis_project_id ON ai_analysis(project_id);
