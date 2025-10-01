@@ -61,6 +61,12 @@ export interface EmailResult {
  * Send project invitation email to couple
  */
 export async function sendProjectInvitationEmail(data: ProjectInvitationData): Promise<EmailResult> {
+  console.log('📧 sendProjectInvitationEmail called with:', {
+    coupleEmail: data.coupleEmail,
+    projectName: data.projectName,
+    invitationToken: data.invitationToken
+  })
+  
   const invitationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/invitation/${data.invitationToken}`
   
   // Try AWS SES first (most reliable for production)

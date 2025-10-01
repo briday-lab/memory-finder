@@ -17,6 +17,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { projectId, coupleEmail, coupleName, message, videographerId } = body
 
+    console.log('🔍 Project sharing request received:', {
+      projectId,
+      coupleEmail,
+      coupleName,
+      message,
+      videographerId,
+      projectIdType: typeof projectId,
+      videographerIdType: typeof videographerId
+    })
+
     if (!projectId || !coupleEmail || !videographerId) {
       return NextResponse.json({ 
         error: 'Project ID, couple email, and videographer ID are required' 
