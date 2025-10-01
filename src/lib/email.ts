@@ -64,8 +64,8 @@ export async function sendProjectInvitationEmail(data: ProjectInvitationData): P
   const invitationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/invitation/${data.invitationToken}`
   
   // Try AWS SES first (most reliable for production)
+  let sesFailureError: unknown = null
   if (sesClient) {
-    let sesFailureError: unknown = null
     try {
       const command = new SendEmailCommand({
         Source: 'Memory Finder <info@briday.ca>',
