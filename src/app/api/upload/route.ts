@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { fromInstanceMetadata } from '@aws-sdk/credential-providers'
 import { query } from '@/lib/database'
 import { v4 as uuidv4 } from 'uuid'
 
-// S3 Client configuration - use default credential provider chain (IAM role)
+// S3 Client configuration - explicitly use instance metadata for serverless
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-2',
-  // No explicit credentials - will use IAM role from Amplify environment
+  credentials: fromInstanceMetadata({
+    timeout: 1000,
+    maxRetries: 3,
+  }),
 })
 
 const RAW_BUCKET = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
