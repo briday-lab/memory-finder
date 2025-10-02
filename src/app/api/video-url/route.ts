@@ -38,13 +38,18 @@ export async function POST(request: NextRequest) {
       userType
     })
 
-    // Debug AWS credentials availability
+    // Debug AWS credentials availability - check all possible env vars
     console.log('🔐 AWS credentials check:', {
-      hasAccessKeyId: !!process.env.AWS_ACCESS_KEY_ID,
-      hasSecretAccessKey: !!process.env.AWS_SECRET_ACCESS_KEY,
+      hasMemoryFinderAccessKeyId: !!process.env.MEMORY_FINDER_ACCESS_KEY_ID,
+      hasMemoryFinderSecretAccessKey: !!process.env.MEMORY_FINDER_SECRET_ACCESS_KEY,
+      memoryFinderRegion: process.env.MEMORY_FINDER_REGION,
+      hasAwsAccessKeyId: !!process.env.AWS_ACCESS_KEY_ID,
+      hasAwsSecretAccessKey: !!process.env.AWS_SECRET_ACCESS_KEY,
+      awsRegion: process.env.AWS_REGION,
       region: process.env.AWS_REGION || 'us-east-2',
       rawBucket: RAW_BUCKET,
-      processedBucket: PROCESSED_BUCKET
+      processedBucket: PROCESSED_BUCKET,
+      allEnvKeys: Object.keys(process.env).filter(key => key.includes('AWS') || key.includes('MEMORY'))
     })
 
     if (!fileId || !projectId || !userId || !userType) {
@@ -107,20 +112,54 @@ export async function POST(request: NextRequest) {
     const bucket = file.bucket_type === 'processed' ? PROCESSED_BUCKET : RAW_BUCKET
 
     // Generate presigned URL for viewing
-    const getObjectCommand = new GetObjectCommand({
-      Bucket: bucket,
-      Key: file.s3_key,
-    })
+    let videoUrl: string
+    try {
+      console.log('🧪 Testing S3 client configuration before generating URL...')
+      console.log('📋 S3 operation details:', {
+        bucket,
+        s3Key: file.s3_key,
+        hasCredentials: !!s3ClientConfig.credentials,
+        credentialType: s3ClientConfig.credentials ? 'explicit' : 'default-chain'
+      })
+      
+      const getObjectCommand = new GetObjectCommand({
+        Bucket: bucket,
+        Key: file.s3_key,
+      })
 
-    const videoUrl = await getSignedUrl(s3Client, getObjectCommand, {
-      expiresIn: 3600 // 1 hour
-    })
+      videoUrl = await getSignedUrl(s3Client, getObjectCommand, {
+        expiresIn: 3600 // 1 hour
+      })
 
-    console.log('✅ Video URL generated:', {
-      fileId,
-      bucket,
-      expiresIn: 3600
-    })
+      console.log('✅ Video URL generated successfully:', {
+        fileId,
+        bucket,
+        s3Key: file.s3_key,
+        expiresIn: 3600,
+        urlLength: videoUrl.length
+      })
+    } catch (s3Error) {
+      console.error('❌ S3 presigned URL generation failed:', s3Error)
+      
+      // Provide detailed error information
+      const errorMessage = s3Error instanceof Error ? s3Error.message : 'Unknown S3 error'
+      const errorName = s3Error instanceof Error ? s3Error.name : 'UnknownError'
+      
+      return NextResponse.json({ 
+        error: 'Failed to generate video URL',
+        details: `S3 Error: ${errorName} - ${errorMessage}`,
+        debugInfo: {
+          bucket,
+          s3Key: file.s3_key,
+          hasCredentials: !!s3ClientConfig.credentials,
+          region: s3ClientConfig.region,
+          environmentVars: {
+            hasMemoryFinderCreds: !!(process.env.MEMORY_FINDER_ACCESS_KEY_ID && process.env.MEMORY_FINDER_SECRET_ACCESS_KEY),
+            hasAwsCreds: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY)
+          }
+        }
+      }, { status: 500 })
+    }
 
     return NextResponse.json({
       videoUrl,
