@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { fromInstanceMetadata } from '@aws-sdk/credential-providers'
 import { query } from '@/lib/database'
 import { v4 as uuidv4 } from 'uuid'
 
-// S3 Client configuration - explicitly use instance metadata for serverless
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-2',
-  credentials: fromInstanceMetadata({
-    timeout: 1000,
-    maxRetries: 3,
-  }),
-})
+// S3 Client configuration - use custom environment variables if available, otherwise default credential chain
+const s3ClientConfig: any = {
+  region: process.env.MEMORY_FINDER_REGION || process.env.AWS_REGION || 'us-east-2',
+}
+
+// Only add explicit credentials if environment variables are available
+if (process.env.MEMORY_FINDER_ACCESS_KEY_ID && process.env.MEMORY_FINDER_SECRET_ACCESS_KEY) {
+  s3ClientConfig.credentials = {
+    accessKeyId: process.env.MEMORY_FINDER_ACCESS_KEY_ID,
+    secretAccessKey: process.env.MEMORY_FINDER_SECRET_ACCESS_KEY,
+  }
+} else if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+  s3ClientConfig.credentials = {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
+}
+
+const s3Client = new S3Client(s3ClientConfig)
 
 const RAW_BUCKET = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
 
