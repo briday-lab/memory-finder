@@ -133,6 +133,11 @@ export default function CoupleDashboard() {
     }
   }, [user, loadSharedProjects])
 
+  // Debug searchResults changes
+  useEffect(() => {
+    console.log('🖥️ searchResults updated - length:', searchResults.length, 'data:', searchResults)
+  }, [searchResults])
+
   const getVideoUrl = async (fileId: string, s3Key?: string) => {
     if (videoUrls[fileId]) return videoUrls[fileId]
     
@@ -485,7 +490,6 @@ export default function CoupleDashboard() {
             )}
 
             {/* Video Player with Curated Moments Sidebar */}
-            {console.log('🖥️ Rendering check - searchResults.length:', searchResults.length, 'searchResults:', searchResults)}
             {searchResults.length > 0 && (
               <div className="grid grid-cols-12 gap-2">
                 {/* Video Player Section */}

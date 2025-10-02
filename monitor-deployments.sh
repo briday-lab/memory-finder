@@ -59,6 +59,9 @@ while true; do
                     if echo "$BUILD_LOG" | grep -q "Type.*undefined.*not assignable to type.*string"; then
                         echo "🎯 Detected TypeScript undefined string error - This has been manually fixed"
                         echo "✅ Fix applied: Added empty string fallbacks for undefined values"
+                    elif echo "$BUILD_LOG" | grep -q "Type.*void.*not assignable to type.*ReactNode"; then
+                        echo "🎯 Detected React console.log in JSX error - This has been manually fixed"
+                        echo "✅ Fix applied: Removed console.log from JSX render path"
                     elif echo "$BUILD_LOG" | grep -q "ESLint.*no-unused-vars"; then
                         echo "🎯 Detected ESLint unused variables error - This should be auto-fixed"
                         echo "✅ ESLint warnings are disabled in configuration"
