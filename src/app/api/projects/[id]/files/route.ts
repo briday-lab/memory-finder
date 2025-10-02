@@ -37,26 +37,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Unauthorized access to project files' }, { status: 403 })
     }
 
-    // Fetch files for the project
+    // First, let's check what columns exist in the files table
+    console.log('🔍 Checking files table structure...')
+    try {
+      const tableInfoQuery = `
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'files' 
+        ORDER BY ordinal_position
+      `
+      const tableInfo = await query(tableInfoQuery, [])
+      console.log('📋 Files table columns:', tableInfo.rows)
+    } catch (schemaError) {
+      console.error('❌ Error checking table schema:', schemaError)
+    }
+
+    // Fetch files for the project - using basic query first
+    console.log('📁 Fetching files for project:', projectId)
     const filesQuery = `
-      SELECT 
-        f.id,
-        f.file_name,
-        f.s3_key,
-        f.s3_bucket,
-        f.file_size,
-        f.file_type,
-        f.duration_seconds,
-        f.status,
-        f.processing_progress,
-        f.created_at,
-        f.updated_at
-      FROM files f
-      WHERE f.project_id = $1
-      ORDER BY f.created_at DESC
+      SELECT * FROM files WHERE project_id = $1 ORDER BY created_at DESC
     `
 
     const result = await query(filesQuery, [projectId])
+    console.log('📊 Files query result:', result.rows)
 
     return NextResponse.json({ files: result.rows })
   } catch (error) {
