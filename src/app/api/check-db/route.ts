@@ -3,9 +3,9 @@ import { query } from '@/lib/database'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check for the specific video file
+    // Check for the specific video file - using correct column names
     const result = await query(
-      "SELECT id, file_name, file_size, s3_key, s3_bucket, project_id, created_at FROM files WHERE s3_key LIKE '%C2468S03.MP4%'",
+      "SELECT * FROM files WHERE s3_key LIKE '%C2468S03.MP4%'",
       []
     )
 
