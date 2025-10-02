@@ -484,8 +484,8 @@ export default function CoupleDashboard() {
                           const compilationUrl = (moment as VideoMoment & { compilationUrl?: string }).compilationUrl
                           
                           const finalSrc = moment.isCompilation 
-                            ? urlFromState || compilationUrl
-                            : urlFromState
+                            ? urlFromState || compilationUrl || ''
+                            : urlFromState || ''
                           
                           console.log(`🎮 VideoPlayer src logic:`)
                           console.log(`  - videoId: ${videoId}`)
