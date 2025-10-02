@@ -3,13 +3,10 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { query } from '@/lib/database'
 
-// S3 Client configuration
+// S3 Client configuration - use default credential provider chain (IAM role)
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-2',
-  credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  } : undefined, // Use default credential provider chain if env vars not available
+  // No explicit credentials - will use IAM role from Amplify environment
 })
 
 const RAW_BUCKET = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
