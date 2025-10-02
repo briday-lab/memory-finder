@@ -139,7 +139,12 @@ export default function CoupleDashboard() {
   }, [searchResults])
 
   const getVideoUrl = async (fileId: string, s3Key?: string) => {
-    if (videoUrls[fileId]) return videoUrls[fileId]
+    console.log('🔗 getVideoUrl called with:', { fileId, s3Key })
+    
+    if (videoUrls[fileId]) {
+      console.log('✅ Video URL already cached:', videoUrls[fileId])
+      return videoUrls[fileId]
+    }
     
     try {
       // First ensure user exists in database to get userId
@@ -159,26 +164,39 @@ export default function CoupleDashboard() {
 
       const userData = await userResponse.json()
       const userId = userData.user.id
+      
+      console.log('🔐 User authenticated for video URL:', userId)
+
+      const requestBody = {
+        fileId: fileId,
+        projectId: selectedProject?.id,
+        userId: userId,
+        userType: 'couple'
+      }
+      
+      console.log('📤 Sending video URL request:', requestBody)
 
       const response = await fetch('/api/video-url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          s3Key: s3Key,
-          bucket: 'memory-finder-raw-120915929747-us-east-2',
-          projectId: selectedProject?.id,
-          userId: userId,
-          userType: 'couple'
-        })
+        body: JSON.stringify(requestBody)
       })
       
+      console.log('📥 Video URL response status:', response.status)
+      
       if (response.ok) {
-        const { videoUrl } = await response.json()
+        const responseData = await response.json()
+        console.log('✅ Video URL response:', responseData)
+        const { videoUrl } = responseData
         setVideoUrls(prev => ({ ...prev, [fileId]: videoUrl }))
         return videoUrl
+      } else {
+        const errorData = await response.json()
+        console.error('❌ Video URL API error:', errorData)
+        throw new Error(`Video URL API error: ${errorData.error}`)
       }
     } catch (error) {
-      console.error('Failed to get video URL:', error)
+      console.error('❌ Failed to get video URL:', error)
     }
     return null
   }
