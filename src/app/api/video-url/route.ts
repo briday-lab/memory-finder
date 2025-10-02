@@ -4,31 +4,22 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { query } from '../../../lib/database'
 
 
-// S3 Client configuration - using environment variables (permanent solution)
-console.log('🔑 Initializing S3 client with environment credentials')
-console.log('🌍 AWS Region:', process.env.MEMORY_FINDER_REGION || process.env.AWS_REGION || 'us-east-2')
-console.log('🔐 Has MEMORY_FINDER_ACCESS_KEY_ID:', !!process.env.MEMORY_FINDER_ACCESS_KEY_ID)
-console.log('🔐 Has MEMORY_FINDER_SECRET_ACCESS_KEY:', !!process.env.MEMORY_FINDER_SECRET_ACCESS_KEY)
-
+// S3 Client configuration - use custom environment variables if available, otherwise default credential chain
 const s3ClientConfig: any = {
   region: process.env.MEMORY_FINDER_REGION || process.env.AWS_REGION || 'us-east-2',
 }
 
-// Use explicit credentials if available, otherwise fall back to IAM role
+// Only add explicit credentials if environment variables are available
 if (process.env.MEMORY_FINDER_ACCESS_KEY_ID && process.env.MEMORY_FINDER_SECRET_ACCESS_KEY) {
   s3ClientConfig.credentials = {
     accessKeyId: process.env.MEMORY_FINDER_ACCESS_KEY_ID,
     secretAccessKey: process.env.MEMORY_FINDER_SECRET_ACCESS_KEY,
   }
-  console.log('✅ Using explicit MEMORY_FINDER credentials')
 } else if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
   s3ClientConfig.credentials = {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   }
-  console.log('✅ Using explicit AWS credentials')
-} else {
-  console.log('⚠️ Using IAM role credentials (may not work in Amplify)')
 }
 
 const s3Client = new S3Client(s3ClientConfig)
