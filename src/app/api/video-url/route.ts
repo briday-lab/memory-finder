@@ -4,17 +4,25 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers'
 import { query } from '../../../lib/database'
 
-// S3 Client configuration - use explicit credential provider chain
-console.log('🔑 Initializing S3 client with explicit credential provider chain')
-console.log('🌍 AWS Region:', process.env.AWS_REGION)
-console.log('⚡ AWS Execution Environment:', process.env.AWS_EXECUTION_ENV)
+// S3 Client configuration - use custom environment variables if available, otherwise default credential chain
+const s3ClientConfig: any = {
+  region: process.env.MEMORY_FINDER_REGION || process.env.AWS_REGION || 'us-east-2',
+}
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-2',
-  credentials: fromNodeProviderChain({
-    // This will try environment variables, IAM roles, etc.
-  })
-})
+// Only add explicit credentials if environment variables are available
+if (process.env.MEMORY_FINDER_ACCESS_KEY_ID && process.env.MEMORY_FINDER_SECRET_ACCESS_KEY) {
+  s3ClientConfig.credentials = {
+    accessKeyId: process.env.MEMORY_FINDER_ACCESS_KEY_ID,
+    secretAccessKey: process.env.MEMORY_FINDER_SECRET_ACCESS_KEY,
+  }
+} else if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+  s3ClientConfig.credentials = {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  }
+}
+
+const s3Client = new S3Client(s3ClientConfig)
 
 const RAW_BUCKET = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
 const PROCESSED_BUCKET = process.env.S3_PROCESSED_BUCKET || 'memory-finder-processed-120915929747-us-east-2'

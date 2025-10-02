@@ -120,13 +120,25 @@ export default function VideoPlayer({
           )}
           
           <div className="relative bg-black rounded-lg overflow-hidden" style={{ aspectRatio: "16/9", maxHeight: "40vh" }}>
-            <video
-              ref={videoRef}
-              src={src || 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
-              className="w-full h-full object-cover min-h-0"
-              preload="metadata"
-              crossOrigin="anonymous"
-            />
+            {src ? (
+              <video
+                ref={videoRef}
+                src={src}
+                className="w-full h-full object-cover min-h-0"
+                preload="metadata"
+                crossOrigin="anonymous"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white bg-gray-800">
+                <div className="text-center">
+                  <div className="text-2xl mb-2">🎬</div>
+                  <div className="text-sm">Loading video...</div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    {fileName || 'Video file'}
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* Video Controls Overlay */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
