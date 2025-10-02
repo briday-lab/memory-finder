@@ -9,6 +9,8 @@ frontend:
         - npm cache clean --force
         - echo "📦 Installing dependencies..."
         - npm ci --no-cache
+        - echo "🔧 Ensuring TypeScript is available..."
+        - npm install --save-dev typescript @types/node
         - echo "✅ Dependencies installed successfully"
     build:
       commands:
