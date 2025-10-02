@@ -3,25 +3,43 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { query } from '@/lib/database'
 
-// S3 Client configuration - use custom environment variables if available, otherwise default credential chain
-const s3ClientConfig: any = {
-  region: process.env.MEMORY_FINDER_REGION || process.env.AWS_REGION || 'us-east-2',
+// Create S3 client with multiple fallback strategies
+function createS3Client() {
+  const region = process.env.MEMORY_FINDER_REGION || process.env.AWS_REGION || 'us-east-2'
+  
+  // Strategy 1: Try custom environment variables
+  if (process.env.MEMORY_FINDER_ACCESS_KEY_ID && process.env.MEMORY_FINDER_SECRET_ACCESS_KEY) {
+    console.log('🔑 Using MEMORY_FINDER credentials')
+    return new S3Client({
+      region,
+      credentials: {
+        accessKeyId: process.env.MEMORY_FINDER_ACCESS_KEY_ID,
+        secretAccessKey: process.env.MEMORY_FINDER_SECRET_ACCESS_KEY,
+      }
+    })
+  }
+  
+  // Strategy 2: Try standard AWS environment variables
+  if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    console.log('🔑 Using AWS credentials')
+    return new S3Client({
+      region,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      }
+    })
+  }
+  
+  // Strategy 3: Use default credential provider chain (IAM role, etc.)
+  console.log('🔑 Using default credential provider chain')
+  return new S3Client({
+    region,
+    // No explicit credentials - let AWS SDK find them automatically
+  })
 }
 
-// Only add explicit credentials if environment variables are available
-if (process.env.MEMORY_FINDER_ACCESS_KEY_ID && process.env.MEMORY_FINDER_SECRET_ACCESS_KEY) {
-  s3ClientConfig.credentials = {
-    accessKeyId: process.env.MEMORY_FINDER_ACCESS_KEY_ID,
-    secretAccessKey: process.env.MEMORY_FINDER_SECRET_ACCESS_KEY,
-  }
-} else if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
-  s3ClientConfig.credentials = {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  }
-}
-
-const s3Client = new S3Client(s3ClientConfig)
+const s3Client = createS3Client()
 
 const RAW_BUCKET = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
 const PROCESSED_BUCKET = process.env.S3_PROCESSED_BUCKET || 'memory-finder-processed-120915929747-us-east-2'
@@ -118,8 +136,7 @@ export async function POST(request: NextRequest) {
       console.log('📋 S3 operation details:', {
         bucket,
         s3Key: file.s3_key,
-        hasCredentials: !!s3ClientConfig.credentials,
-        credentialType: s3ClientConfig.credentials ? 'explicit' : 'default-chain'
+        region: process.env.MEMORY_FINDER_REGION || process.env.AWS_REGION || 'us-east-2'
       })
       
       const getObjectCommand = new GetObjectCommand({
@@ -151,8 +168,7 @@ export async function POST(request: NextRequest) {
         debugInfo: {
           bucket,
           s3Key: file.s3_key,
-          hasCredentials: !!s3ClientConfig.credentials,
-          region: s3ClientConfig.region,
+          region: process.env.MEMORY_FINDER_REGION || process.env.AWS_REGION || 'us-east-2',
           environmentVars: {
             hasMemoryFinderCreds: !!(process.env.MEMORY_FINDER_ACCESS_KEY_ID && process.env.MEMORY_FINDER_SECRET_ACCESS_KEY),
             hasAwsCreds: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY)
