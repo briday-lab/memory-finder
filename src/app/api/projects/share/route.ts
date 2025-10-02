@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/database'
-import { sendProjectInvitationEmail } from '@/lib/email'
+import { query } from '../../../../lib/database'
+import { sendProjectInvitationEmail } from '../../../../lib/email'
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,7 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { query } from '@/lib/database'
+import { query } from '../lib/database'
 
 interface ExtendedUser {
   id?: string

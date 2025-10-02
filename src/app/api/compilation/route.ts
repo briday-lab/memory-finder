@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/database'
+import { query } from '../../../lib/database'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { createCompilationJob, createSimpleCompilation } from '@/lib/mediaconvert'
+import { authOptions } from '../../../lib/auth'
+import { createCompilationJob, createSimpleCompilation } from '../../../lib/mediaconvert'
 
 export async function POST(request: NextRequest) {
   try {

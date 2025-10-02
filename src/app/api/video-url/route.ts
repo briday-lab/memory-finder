@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers'
-import { query } from '@/lib/database'
+import { query } from '../../../lib/database'
 
 // S3 Client configuration - use explicit credential provider chain
 console.log('🔑 Initializing S3 client with explicit credential provider chain')

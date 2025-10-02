@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query } from '@/lib/database'
+import { query } from '../../../lib/database'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { generateEmbedding } from '@/lib/embeddings'
-import cache, { CacheKeys, CacheTTL } from '@/lib/cache'
+import { authOptions } from '../../../lib/auth'
+import { generateEmbedding } from '../../../lib/embeddings'
+import cache, { CacheKeys, CacheTTL } from '../../../lib/cache'
 
 export async function POST(request: NextRequest) {
   try {
