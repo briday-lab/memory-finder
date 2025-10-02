@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers'
 import { query } from '../../../lib/database'
 
-// TEMPORARY WORKAROUND: Generate pre-signed URL for the specific uploaded video
-// This bypasses the credential issue while we fix the IAM role permissions
-const TEMP_VIDEO_URL = 'https://memory-finder-raw-120915929747-us-east-2.s3.us-east-2.amazonaws.com/uploads/4e918f22-a347-4df5-a38f-46626040962a/1759361995418-C2468S03.MP4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIARYJZGVKJ6JNEN7MR%2F20251002%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20251002T060559Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=e909f758a1a56e9851757f51f88999e177edc0942910ab23e926540ad00d40bc'
 
-// S3 Client configuration - use default credential chain (will be fixed with proper IAM role later)
-const s3ClientConfig: any = {
+// S3 Client configuration - using IAM role credentials (permanent solution)
+console.log('🔑 Initializing S3 client with IAM role credentials')
+console.log('🌍 AWS Region:', process.env.AWS_REGION || 'us-east-2')
+
+const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-2',
-}
-
-const s3Client = new S3Client(s3ClientConfig)
+  // Use default credential provider chain (IAM role)
+})
 
 const RAW_BUCKET = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
 const PROCESSED_BUCKET = process.env.S3_PROCESSED_BUCKET || 'memory-finder-processed-120915929747-us-east-2'
@@ -103,17 +101,6 @@ export async function POST(request: NextRequest) {
     const file = fileResult.rows[0]
     const bucket = file.bucket_type === 'processed' ? PROCESSED_BUCKET : RAW_BUCKET
 
-    // TEMPORARY WORKAROUND: Return pre-generated URL for the specific uploaded video
-    if (file.s3_key === 'uploads/4e918f22-a347-4df5-a38f-46626040962a/1759361995418-C2468S03.MP4') {
-      console.log('🔧 Using temporary workaround for uploaded video')
-      
-      return NextResponse.json({
-        videoUrl: TEMP_VIDEO_URL,
-        fileId,
-        fileName: file.filename,
-        message: 'Temporary URL - IAM role permissions being configured'
-      })
-    }
 
     // Generate presigned URL for viewing using IAM role credentials
     let videoUrl: string
