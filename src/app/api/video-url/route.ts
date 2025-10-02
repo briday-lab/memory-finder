@@ -3,44 +3,15 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { query } from '@/lib/database'
 
-// S3 Client configuration - try multiple approaches
-let s3Client: S3Client
+// S3 Client configuration - use Lambda execution role credentials
+console.log('🔑 Initializing S3 client with Lambda execution role credentials')
+console.log('🌍 AWS Region:', process.env.AWS_REGION)
+console.log('⚡ AWS Execution Environment:', process.env.AWS_EXECUTION_ENV)
 
-try {
-  // First try with explicit credentials if available
-  if (process.env.MEMORY_FINDER_ACCESS_KEY_ID && process.env.MEMORY_FINDER_SECRET_ACCESS_KEY) {
-    console.log('🔑 Using MEMORY_FINDER credentials')
-    s3Client = new S3Client({
-      region: process.env.MEMORY_FINDER_REGION || 'us-east-2',
-      credentials: {
-        accessKeyId: process.env.MEMORY_FINDER_ACCESS_KEY_ID,
-        secretAccessKey: process.env.MEMORY_FINDER_SECRET_ACCESS_KEY,
-      }
-    })
-  } else if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
-    console.log('🔑 Using AWS credentials')
-    s3Client = new S3Client({
-      region: process.env.AWS_REGION || 'us-east-2',
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      }
-    })
-  } else {
-    // Use default credential provider chain (IAM role, instance metadata, etc.)
-    console.log('🔑 Using default credential provider chain')
-    s3Client = new S3Client({
-      region: 'us-east-2',
-      // No explicit credentials - let AWS SDK find them automatically
-    })
-  }
-} catch (error) {
-  console.error('❌ S3 Client initialization error:', error)
-  // Fallback to basic configuration
-  s3Client = new S3Client({
-    region: 'us-east-2'
-  })
-}
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION || 'us-east-2',
+  // No explicit credentials - use the Lambda execution role
+})
 
 const RAW_BUCKET = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
 const PROCESSED_BUCKET = process.env.S3_PROCESSED_BUCKET || 'memory-finder-processed-120915929747-us-east-2'
