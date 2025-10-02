@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Heart, Mail, Lock, Eye, EyeOff, User, Shield } from 'lucide-react'
-import { cognitoAuth, SignUpData, SignInData } from '@/lib/cognito-auth'
+import { cognitoAuth, SignUpData, SignInData } from '../lib/cognito-auth'
 
 export default function LandingPage() {
   const router = useRouter()

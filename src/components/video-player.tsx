@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from './ui/button'
+import { Card, CardContent } from './ui/card'
 import { Play, Pause, Volume2, VolumeX, Maximize } from 'lucide-react'
 
 interface VideoPlayerProps {
