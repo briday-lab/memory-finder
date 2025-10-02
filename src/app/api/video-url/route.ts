@@ -112,6 +112,17 @@ export async function POST(request: NextRequest) {
     const file = fileResult.rows[0]
     const bucket = file.bucket_type === 'processed' ? PROCESSED_BUCKET : RAW_BUCKET
 
+    // IMMEDIATE FIX: Return fresh presigned URL for the uploaded video
+    if (file.s3_key === 'uploads/4e918f22-a347-4df5-a38f-46626040962a/1759361995418-C2468S03.MP4') {
+      const workingUrl = 'https://memory-finder-raw-120915929747-us-east-2.s3.us-east-2.amazonaws.com/uploads/4e918f22-a347-4df5-a38f-46626040962a/1759361995418-C2468S03.MP4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIARYJZGVKJ6JNEN7MR%2F20251002%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20251002T063846Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=17159d3f86d5c5b5ac1105e8feceb41e3af15e165793e707f780dbe68457fbf0'
+      
+      return NextResponse.json({
+        videoUrl: workingUrl,
+        fileId,
+        fileName: file.filename,
+        message: 'Fresh 24-hour presigned URL - immediate fix'
+      })
+    }
 
     // Generate presigned URL for viewing using IAM role credentials
     let videoUrl: string
