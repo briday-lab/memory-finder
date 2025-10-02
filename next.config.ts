@@ -11,12 +11,15 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
-  // Ensure proper module resolution
-  experimental: {
-    esmExternals: false,
+  // Webpack configuration for better module resolution
+  webpack: (config, { isServer }) => {
+    // Ensure proper module resolution
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+    };
+    
+    return config;
   },
-  // Clear build cache
-  distDir: '.next',
 };
 
 export default nextConfig;

@@ -4,16 +4,23 @@ frontend:
     preBuild:
       commands:
         - echo "🔄 Starting Amplify build process..."
+        - echo "🔧 Node.js version:" && node --version
+        - echo "📦 NPM version:" && npm --version
         - echo "🧹 Clearing build cache..."
         - rm -rf .next node_modules/.cache
+        - echo "📋 Installing dependencies..."
         - npm ci
         - echo "✅ Dependencies installed successfully"
     build:
       commands:
-        - echo "🔨 Building Next.js application with cache cleared..."
-        - echo "📋 Verifying file structure..."
-        - ls -la src/components/ | head -10
-        - ls -la src/lib/ | head -10
+        - echo "🔨 Building Next.js application..."
+        - echo "📋 Verifying critical files exist..."
+        - ls -la src/components/videographer-dashboard.tsx
+        - ls -la src/components/couple-dashboard.tsx  
+        - ls -la src/lib/cognito-auth.ts
+        - echo "🔍 Testing import resolution..."
+        - node -e "try { require('./src/components/videographer-dashboard.tsx'); console.log('✅ videographer-dashboard found'); } catch(e) { console.log('❌ videographer-dashboard error:', e.message); }"
+        - echo "🏗️ Starting Next.js build..."
         - npm run build
         - echo "✅ Build completed successfully"
   artifacts:

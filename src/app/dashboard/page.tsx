@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import VideographerDashboard from '@/components/videographer-dashboard'
-import CoupleDashboard from '@/components/couple-dashboard'
-import { cognitoAuth, CognitoUser } from '@/lib/cognito-auth'
+import VideographerDashboard from '../../components/videographer-dashboard'
+import CoupleDashboard from '../../components/couple-dashboard'
+import { cognitoAuth, CognitoUser } from '../../lib/cognito-auth'
 
 export default function DashboardPage() {
   const router = useRouter()
