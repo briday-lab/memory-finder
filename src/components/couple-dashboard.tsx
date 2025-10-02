@@ -179,10 +179,18 @@ export default function CoupleDashboard() {
   }
 
   const loadAllVideos = async () => {
-    if (!selectedProject || !user?.email) return
+    console.log('🎬 loadAllVideos called')
+    console.log('📋 selectedProject:', selectedProject)
+    console.log('👤 user.email:', user?.email)
+    
+    if (!selectedProject || !user?.email) {
+      console.log('❌ Missing selectedProject or user.email')
+      return
+    }
 
     setIsSearching(true)
     try {
+      console.log('🔐 Authenticating user...')
       // First ensure user exists in database
       const userResponse = await fetch('/api/users', {
         method: 'POST',
@@ -200,12 +208,22 @@ export default function CoupleDashboard() {
 
       const userData = await userResponse.json()
       const userId = userData.user.id
+      console.log('✅ User authenticated, userId:', userId)
 
       // Fetch actual files from the project
+      console.log('📁 Fetching project files...')
       const filesResponse = await fetch(`/api/projects/${selectedProject.id}/files?userId=${userId}&userType=couple`)
       
       if (filesResponse.ok) {
         const { files } = await filesResponse.json()
+        console.log('📋 Files received:', files)
+        console.log('📊 Number of files:', files.length)
+        
+        if (files.length === 0) {
+          console.log('⚠️ No files found in this project')
+          setSearchResults([])
+          return
+        }
         
         // Convert files to VideoMoment format
         const normalized = files.map((file: any, idx: number) => ({
@@ -223,19 +241,26 @@ export default function CoupleDashboard() {
           duration: Number(file.duration_seconds) || 300
         }))
         
+        console.log('🎯 Normalized video moments:', normalized)
         setSearchResults(normalized)
         
         // Fetch video URLs for all results
+        console.log('🔗 Fetching video URLs...')
         normalized.forEach(async (moment: VideoMoment) => {
           if (moment.video_file_id) {
+            console.log(`🎥 Fetching URL for video: ${moment.video_file_id}`)
             await getVideoUrl(moment.video_file_id, (moment as VideoMoment & { s3_key?: string }).s3_key)
           }
         })
+        
+        console.log('✅ All videos loaded successfully')
       } else {
-        console.error('Failed to fetch project files:', await filesResponse.text())
+        const errorText = await filesResponse.text()
+        console.error('❌ Failed to fetch project files:', errorText)
+        console.error('📊 Response status:', filesResponse.status)
       }
     } catch (error) {
-      console.error('Error loading videos:', error)
+      console.error('❌ Error loading videos:', error)
     } finally {
       setIsSearching(false)
     }
@@ -460,6 +485,7 @@ export default function CoupleDashboard() {
             )}
 
             {/* Video Player with Curated Moments Sidebar */}
+            {console.log('🖥️ Rendering check - searchResults.length:', searchResults.length, 'searchResults:', searchResults)}
             {searchResults.length > 0 && (
               <div className="grid grid-cols-12 gap-2">
                 {/* Video Player Section */}
