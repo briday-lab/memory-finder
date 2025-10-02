@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers'
 import { query } from '@/lib/database'
 
-// S3 Client configuration - use Lambda execution role credentials
-console.log('🔑 Initializing S3 client with Lambda execution role credentials')
+// S3 Client configuration - use explicit credential provider chain
+console.log('🔑 Initializing S3 client with explicit credential provider chain')
 console.log('🌍 AWS Region:', process.env.AWS_REGION)
 console.log('⚡ AWS Execution Environment:', process.env.AWS_EXECUTION_ENV)
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'us-east-2',
-  // No explicit credentials - use the Lambda execution role
+  credentials: fromNodeProviderChain({
+    // This will try environment variables, IAM roles, etc.
+  })
 })
 
 const RAW_BUCKET = process.env.S3_RAW_BUCKET || 'memory-finder-raw-120915929747-us-east-2'
